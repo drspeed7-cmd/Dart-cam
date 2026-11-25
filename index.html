@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dart Cam Scorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: Kneipe trifft Turnier – knapp, laut, gut lesbar aus 2 m Entfernung
+   IDEA: die Kreidetafel neben dem Board, nur dass das Handy schreibt
+   PICTURE: das Live-Kamerabild mit eingeblendeten Ringen und Treffern
+   COLOUR and TYPE: Board-Schwarz, Sisal-Beige, Board-Rot & -Grün; Oswald + Inter
+   LAYOUT: Kamera oben, darunter Spieler-Scores groß, Würfe als Chips */
+:root{color-scheme:dark;--bg:#111211;--card:#1c1d1b;--ink:#f1ead8;--mut:#a39c8a;--red:#d8312a;--grn:#1f9a4c;--sis:#e7d6ae}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,.big{font-family:Oswald,Impact,sans-serif;letter-spacing:.01em;margin:0}
+h1{font-size:28px}
+main{max-width:900px;margin:0 auto;padding:12px max(3vw,12px) 40px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.cam{position:relative;background:#000;border-radius:14px;overflow:hidden;border:2px solid #2b2c29}
+.cam video{display:block;width:100%;height:auto}
+.cam canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.hint{position:absolute;left:8px;right:8px;top:8px;background:rgba(17,18,17,.82);padding:8px 12px;border-radius:10px;font-size:15px}
+.hint:empty{display:none}
+.status{position:absolute;right:8px;bottom:8px;background:rgba(17,18,17,.8);padding:4px 10px;border-radius:99px;font-size:13px}
+button,select,input{font:inherit;font-size:16px;color:var(--ink);background:#2a2b28;border:1px solid #3a3b37;border-radius:10px;min-height:44px;padding:0 14px}
+button{cursor:pointer;font-weight:600}
+button.pri{background:var(--red);border-color:var(--red);color:#fff}
+button.ok{background:var(--grn);border-color:var(--grn);color:#fff}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--sis);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0}
+.pl{background:var(--card);border-radius:14px;padding:10px 14px;border:2px solid transparent}
+.pl.on{border-color:var(--grn)}
+.pl .n{color:var(--mut);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl .big{font-size:clamp(40px,11vw,64px);line-height:1}
+.pl .co{font-size:13px;color:var(--sis);min-height:20px}
+.turn{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.chip{background:var(--card);border:2px solid #3a3b37;border-radius:12px;padding:6px 14px;min-width:84px;text-align:center}
+.chip b{display:block;font-family:Oswald;font-size:24px}
+.chip.sel{border-color:var(--sis)}
+.chip.bust{border-color:var(--red)}
+.sum{font-family:Oswald;font-size:24px;margin-left:auto;align-self:center}
+.panel{background:var(--card);border-radius:14px;padding:14px;margin-top:14px;display:grid;gap:12px}
+.panel label{display:grid;gap:4px;font-size:14px;color:var(--mut)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+small{color:var(--mut)}
+.win{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;place-items:center;text-align:center;z-index:5}
+.win.on{display:grid}
+.win .big{font-size:56px;color:var(--sis)}
+@media (prefers-reduced-motion:no-preference){.pl{transition:border-color .3s}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>Dart Cam Scorer</h1>
+    <div class="row">
+      <button id="bCal">Kalibrieren</button>
+      <button id="bSet">Einstellungen</button>
+    </div>
+  </div>
+
+  <div class="cam" id="cam">
+    <video id="vid" playsinline muted autoplay></video>
+    <canvas id="ov"></canvas>
+    <div class="hint" id="hint">Tippe auf „Kamera starten“.</div>
+    <div class="status" id="st">Kamera aus</div>
+  </div>
+
+  <div class="row" style="margin-top:10px">
+    <button class="pri" id="bStart">Kamera starten</button>
+    <button id="bMiss">Daneben (0)</button>
+    <button id="bNext">Nächster Spieler</button>
+    <button id="bUndo">Letzten Dart löschen</button>
+  </div>
+
+  <div class="players" id="players"></div>
+  <div class="turn" id="turn"></div>
+  <small id="tip">Tipp: Tippe einen Wurf an und dann auf die richtige Stelle im Kamerabild, um ihn zu korrigieren.</small>
+
+  <section class="panel" id="settings" hidden>
+    <h2>Einstellungen</h2>
+    <div class="grid2">
+      <label>Spieler (durch Komma getrennt)<input id="iPl" value="Spieler 1, Spieler 2"></label>
+      <label>Startpunkte<select id="iStart"><option>501</option><option>301</option><option>701</option></select></label>
+      <label>Finish<select id="iOut"><option value="d">Double Out</option><option value="s">Single Out</option></select></label>
+      <label>Wo hängt das Handy?<select id="iDir">
+        <option value="0,1">Unterhalb der Scheibe</option><option value="0,-1">Oberhalb der Scheibe</option>
+        <option value="-1,0">Links von der Scheibe</option><option value="1,0">Rechts von der Scheibe</option></select></label>
+      <label>Empfindlichkeit<input id="iSens" type="range" min="12" max="60" value="28"></label>
+      <label>Ansage per Sprache<select id="iVoice"><option value="1">An</option><option value="0">Aus</option></select></label>
+    </div>
+    <div class="row"><button class="ok" id="bNew">Neues Spiel</button></div>
+    <small>Das Handy fest montieren (Stativ/Halter), ca. 60–100 cm vor der Scheibe, etwas unter- oder oberhalb, damit es nicht im Weg ist. Gleichmäßiges Licht hilft am meisten.</small>
+  </section>
+</main>
+
+<div class="win" id="win"><div><div class="big" id="winName"></div><p>hat das Leg gewonnen!</p><button class="ok" id="bWin">Neues Leg</button></div></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const vid=$('vid'),ov=$('ov'),ctx=ov.getContext('2d'),hint=$('hint'),st=$('st');
+const ORDER=[20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+const CAL_NAMES=['oben am Doppelring der 20','rechts am Doppelring der 6','unten am Doppelring der 3','links am Doppelring der 11'];
+const CAL_MM=[[0,-170],[170,0],[0,170],[-170,0]];
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- Homographie ---------- */
+function solve(A,b){const n=b.length;for(let i=0;i<n;i++){let m=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[m][i]))m=r;[A[i],A[m]]=[A[m],A[i]];[b[i],b[m]]=[b[m],b[i]];for(let r=i+1;r<n;r++){const f=A[r][i]/A[i][i];for(let c=i;c<n;c++)A[r][c]-=f*A[i][c];b[r]-=f*b[i]}}const x=Array(n).fill(0);for(let i=n-1;i>=0;i--){let s=b[i];for(let c=i+1;c<n;c++)s-=A[i][c]*x[c];x[i]=s/A[i][i]}return x}
+function homog(src,dst){const A=[],b=[];for(let i=0;i<4;i++){const[x,y]=src[i],[u,v]=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}const h=solve(A,b);h.push(1);return h}
+function apply(h,x,y){const w=h[6]*x+h[7]*y+h[8];return[(h[0]*x+h[1]*y+h[2])/w,(h[3]*x+h[4]*y+h[5])/w]}
+
+/* ---------- Score aus Board-Koordinaten (mm) ---------- */
+function scoreAt(x,y){const r=Math.hypot(x,y);if(r<=6.35)return{v:50,m:2,l:'Bull'};if(r<=15.9)return{v:25,m:1,l:'25'};if(r>170)return{v:0,m:0,l:'Daneben'};
+  let a=Math.atan2(x,-y)*180/Math.PI;a=(a+360+9)%360;const s=ORDER[Math.floor(a/18)];
+  if(r>=99&&r<=107)return{v:3*s,m:3,l:'T'+s};if(r>=162)return{v:2*s,m:2,l:'D'+s};return{v:s,m:1,l:String(s)}}
+
+/* ---------- Spielzustand ---------- */
+let G=null,sel=-1;
+function newGame(){const names=$('iPl').value.split(',').map(s=>s.trim()).filter(Boolean);const start=+$('iStart').value;
+  G={start,dOut:$('iOut').value==='d',pl:(names.length?names:['Spieler 1']).map(n=>({n,s:start})),cur:0,darts:[],ts:start,done:false,bust:false};
+  saveSettings();render()}
+function replay(){const p=G.pl[G.cur];let s=G.ts;G.bust=false;G.done=false;
+  for(const d of G.darts){const n=s-d.v;if(n<0||n===1||(n===0&&G.dOut&&d.m!==2)){G.bust=true;d.bust=true;s=G.ts;G.done=true;break}d.bust=false;s=n;if(n===0){G.done=true;win(p.n);break}}
+  if(G.darts.length>=3)G.done=true;p.s=s;render()}
+function addDart(d){if(G.done)return;G.darts.push(d);say(d.l==='Daneben'?'Daneben':d.l.replace('T','Triple ').replace('D','Double '));replay();
+  if(G.bust)say('Überworfen');else if(G.done&&G.pl[G.cur].s>0){const t=G.darts.reduce((a,d)=>a+d.v,0);say(t+' Punkte')}}
+function nextTurn(){if(G.pl[G.cur].s===0)return;G.cur=(G.cur+1)%G.pl.length;G.darts=[];G.ts=G.pl[G.cur].s;G.done=false;G.bust=false;sel=-1;render();say(G.pl[G.cur].n+', noch '+G.ts)}
+function win(n){$('winName').textContent=n;$('win').classList.add('on');say(n+' gewinnt!')}
+
+/* Checkout-Vorschlag */
+const THROWS=[];for(let s=20;s>=1;s--)THROWS.push({v:3*s,m:3,l:'T'+s});THROWS.push({v:50,m:2,l:'Bull'},{v:25,m:1,l:'25'});for(let s=20;s>=1;s--)THROWS.push({v:2*s,m:2,l:'D'+s},{v:s,m:1,l:String(s)});
+function checkout(rest,n){if(rest>170||rest<2&&G.dOut)return'';const fin=THROWS.filter(t=>!G.dOut||t.m===2);
+  for(let k=1;k<=n;k++){const r=find(rest,k,fin);if(r)return r.join(' · ')}return''}
+function find(rest,k,fin){if(k===1){const f=fin.find(t=>t.v===rest);return f?[f.l]:null}for(const t of THROWS){if(t.v>=rest)continue;const r=find(rest-t.v,k-1,fin);if(r)return[t.l,...r]}return null}
+
+function render(){
+  $('players').innerHTML=G.pl.map((p,i)=>`<div class="pl${i===G.cur?' on':''}"><div class="n"></div><div class="big">${p.s}</div><div class="co">${i===G.cur&&!G.done?esc(checkout(p.s,3-G.darts.length)):''}</div></div>`).join('');
+  [...document.querySelectorAll('.pl .n')].forEach((e,i)=>e.textContent=G.pl[i].n);
+  const sum=G.darts.reduce((a,d)=>a+d.v,0);
+  $('turn').innerHTML=G.darts.map((d,i)=>`<button class="chip${i===sel?' sel':''}${d.bust?' bust':''}" data-i="${i}"><b>${esc(d.l)}</b>${d.v}</button>`).join('')+
+    `<span class="sum">${G.bust?'Überworfen':sum+' Punkte'}</span>`;
+  drawOverlay()}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';')}
+$('turn').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const i=+b.dataset.i;sel=sel===i?-1:i;render();
+  if(sel>=0)hint.textContent='Tippe im Kamerabild auf die richtige Stelle dieses Darts.';else hint.textContent=''});
+
+/* ---------- Sprache ---------- */
+function say(t){if($('iVoice').value!=='1'||!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';speechSynthesis.speak(u)}catch(e){}}
+
+/* ---------- Kamera & Kalibrierung ---------- */
+let H=store.get('dc_H'),Hinv=store.get('dc_Hinv'),cal=null,running=false;
+async function startCam(){
+  if(!navigator.mediaDevices?.getUserMedia){hint.textContent='Dieser Browser erlaubt keinen Kamerazugriff. Öffne die Seite über https:// in Chrome oder Safari.';return}
+  try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});vid.srcObject=s;await vid.play()}
+  catch(e){hint.textContent='Kamera nicht verfügbar: '+e.message;return}
+  try{await navigator.wakeLock?.request('screen')}catch(e){}
+  $('bStart').hidden=true;running=true;
+  if(!H)startCal();else{hint.textContent='';resetRefs();st.textContent='Bereit – wirf!'}
+  loop()}
+function startCal(){cal=[];hint.textContent='Kalibrierung 1/4: Tippe '+CAL_NAMES[0]+'.';drawOverlay()}
+ov.addEventListener('pointerdown',e=>{const r=ov.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+  if(cal){cal.push([x,y]);if(cal.length<4){hint.textContent=`Kalibrierung ${cal.length+1}/4: Tippe ${CAL_NAMES[cal.length]}.`;drawOverlay();return}
+    H=homog(cal,CAL_MM);Hinv=homog(CAL_MM,cal);store.set('dc_H',H);store.set('dc_Hinv',Hinv);cal=null;mask=null;hint.textContent='';resetRefs();st.textContent='Bereit – wirf!';drawOverlay();return}
+  if(sel>=0&&H){const[mx,my]=apply(H,x,y);const s=scoreAt(mx,my);Object.assign(G.darts[sel],s,{x,y});sel=-1;hint.textContent='';replay()}});
+
+function drawOverlay(){
+  const w=ov.width=ov.clientWidth*devicePixelRatio,h=ov.height=ov.clientHeight*devicePixelRatio;ctx.clearRect(0,0,w,h);
+  if(cal){ctx.fillStyle='#e7d6ae';cal.forEach(([x,y])=>{ctx.beginPath();ctx.arc(x*w,y*h,8*devicePixelRatio,0,7);ctx.fill()});return}
+  if(!Hinv)return;ctx.lineWidth=1.5*devicePixelRatio;
+  for(const[r,c]of[[170,'#1f9a4c'],[162,'#1f9a4c'],[107,'#d8312a'],[99,'#d8312a'],[15.9,'#e7d6ae'],[6.35,'#e7d6ae']]){ctx.strokeStyle=c;ctx.beginPath();
+    for(let a=0;a<=64;a++){const t=a/64*2*Math.PI,[x,y]=apply(Hinv,r*Math.sin(t),-r*Math.cos(t));a?ctx.lineTo(x*w,y*h):ctx.moveTo(x*w,y*h)}ctx.stroke()}
+  ctx.strokeStyle='rgba(231,214,174,.35)';for(let i=0;i<20;i++){const t=(i*18+9)*Math.PI/180,[x1,y1]=apply(Hinv,15.9*Math.sin(t),-15.9*Math.cos(t)),[x2,y2]=apply(Hinv,170*Math.sin(t),-170*Math.cos(t));ctx.beginPath();ctx.moveTo(x1*w,y1*h);ctx.lineTo(x2*w,y2*h);ctx.stroke()}
+  if(G)G.darts.forEach((d,i)=>{if(d.x==null)return;ctx.fillStyle=i===sel?'#e7d6ae':'#ffd400';ctx.beginPath();ctx.arc(d.x*w,d.y*h,7*devicePixelRatio,0,7);ctx.fill();ctx.font=`${14*devicePixelRatio}px Oswald`;ctx.fillText(d.l,d.x*w+10*devicePixelRatio,d.y*h-8*devicePixelRatio)})}
+
+/* ---------- Bilderkennung ---------- */
+const SW=240;let SH=135,work=document.createElement('canvas'),wctx=work.getContext('2d',{willReadFrequently:true});
+let prev=null,ref=null,empty=null,mask=null,maskN=0,stable=0,clearWait=0;
+function gray(){wctx.drawImage(vid,0,0,SW,SH);const d=wctx.getImageData(0,0,SW,SH).data,g=new Uint8Array(SW*SH);for(let i=0,j=0;i<g.length;i++,j+=4)g[i]=(d[j]*77+d[j+1]*150+d[j+2]*29)>>8;return g}
+function buildMask(){mask=new Uint8Array(SW*SH);maskN=0;for(let y=0;y<SH;y++)for(let x=0;x<SW;x++){const[mx,my]=apply(H,(x+.5)/SW,(y+.5)/SH);if(Math.hypot(mx,my)<=182){mask[y*SW+x]=1;maskN++}}}
+function resetRefs(){ref=null;empty=null;prev=null;stable=0}
+function loop(){if(!running)return;
+  if(vid.videoWidth&&H&&!cal){SH=Math.round(SW*vid.videoHeight/vid.videoWidth);if(work.width!==SW||work.height!==SH){work.width=SW;work.height=SH;mask=null;resetRefs()}
+    if(!mask)buildMask();step(gray())}
+  setTimeout(()=>requestAnimationFrame(loop),90)}
+function diffCount(a,b,th){let n=0;for(let i=0;i<a.length;i++)if(mask[i]&&Math.abs(a[i]-b[i])>th)n++;return n}
+function step(cur){
+  const th=+$('iSens').value;
+  if(!ref){ref=cur;empty=cur;prev=cur;return}
+  const motion=diffCount(cur,prev,th);prev=cur;
+  if(motion>maskN*.003){stable=0;st.textContent='Bewegung …';return}
+  if(++stable<4)return;
+  const changed=diffCount(cur,ref,th);
+  if(G.done||G.pl[G.cur].s===0){
+    st.textContent='Darts ziehen …';
+    if(diffCount(cur,empty,th)<maskN*.004){if(++clearWait>2){clearWait=0;ref=cur;empty=cur;nextTurn()}}else clearWait=0;
+    if(changed>0)ref=cur;return}
+  st.textContent='Bereit – wirf!';
+  if(changed<6)return;
+  if(changed>maskN*.12){ /* großer Unterschied: Darts gezogen oder Licht geändert */
+    if(G.darts.length&&diffCount(cur,empty,th)<maskN*.004){ref=cur;empty=cur;nextTurn()}else{ref=cur}return}
+  const tip=findTip(cur,ref,th);ref=cur;if(!tip)return;
+  const[mx,my]=apply(H,tip[0],tip[1]);addDart({...scoreAt(mx,my),x:tip[0],y:tip[1]})}
+function findTip(cur,old,th){
+  const[dx,dy]=$('iDir').value.split(',').map(Number);const on=new Uint8Array(cur.length);
+  for(let i=0;i<cur.length;i++)if(mask[i]&&Math.abs(cur[i]-old[i])>th)on[i]=1;
+  let best=-1e9,pts=[];
+  for(let y=1;y<SH-1;y++)for(let x=1;x<SW-1;x++){const i=y*SW+x;if(!on[i])continue;
+    if(on[i-1]+on[i+1]+on[i-SW]+on[i+SW]<2)continue;const p=x*dx+y*dy;pts.push([x,y,p]);if(p>best)best=p}
+  if(pts.length<4)return null;const near=pts.filter(q=>q[2]>=best-1.5);
+  const ax=near.reduce((a,q)=>a+q[0],0)/near.length,ay=near.reduce((a,q)=>a+q[1],0)/near.length;
+  return[(ax+.5)/SW,(ay+.5)/SH]}
+
+/* ---------- Buttons & Einstellungen ---------- */
+function saveSettings(){store.set('dc_set',{pl:$('iPl').value,st:$('iStart').value,o:$('iOut').value,d:$('iDir').value,s:$('iSens').value,v:$('iVoice').value})}
+const S=store.get('dc_set');if(S){$('iPl').value=S.pl;$('iStart').value=S.st;$('iOut').value=S.o;$('iDir').value=S.d;$('iSens').value=S.s;$('iVoice').value=S.v}
+['iDir','iSens','iVoice'].forEach(id=>$(id).addEventListener('change',saveSettings));
+$('bStart').onclick=startCam;
+$('bCal').onclick=()=>{if(!running){hint.textContent='Erst die Kamera starten.';return}startCal()};
+$('bSet').onclick=()=>{$('settings').hidden=!$('settings').hidden};
+$('bNew').onclick=()=>{newGame();resetRefs();$('settings').hidden=true};
+$('bMiss').onclick=()=>addDart({v:0,m:0,l:'Daneben'});
+$('bNext').onclick=()=>{nextTurn();resetRefs()};
+$('bUndo').onclick=()=>{G.darts.pop();sel=-1;replay();resetRefs()};
+$('bWin').onclick=()=>{$('win').classList.remove('on');newGame();resetRefs()};
+new ResizeObserver(drawOverlay).observe(ov);
+newGame();
+}
+</script>
+</body>
+</html>
