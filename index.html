@@ -171,6 +171,39 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
 @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:no-preference){.slot.f.new{animation:pop .25s ease-out}}
 @media(prefers-reduced-motion:reduce){.cam.live .pill i{animation:none}}
+
+/* Design: Purple */
+:root[data-skin=purple]{--bg:#0f0819;--s1:#1a1029;--s2:#261838;--line:rgba(200,160,255,.12);--ink:#f5eefe;--mut:#a597bd;--ivory:#e9d5ff;--acc:#a855f7;--acc2:#7c3aed}
+[data-skin=purple] body{background:radial-gradient(1100px 600px at 85% -10%,rgba(168,85,247,.32),transparent 60%),radial-gradient(900px 500px at -10% 35%,rgba(236,72,153,.16),transparent 60%),var(--bg);background-attachment:fixed}
+[data-skin=purple] .go,[data-skin=purple] .bar .go{background:linear-gradient(180deg,#c084fc,#7c3aed);box-shadow:0 8px 26px rgba(168,85,247,.45)}
+[data-skin=purple] .ok{background:linear-gradient(180deg,#f472b6,#c026d3)}
+[data-skin=purple] header h1 span,[data-skin=purple] .mhead h1 span{color:#c084fc}
+[data-skin=purple] .hero{background:linear-gradient(160deg,#2a1745,#150c24)}
+[data-skin=purple] .hero::after{background:radial-gradient(circle,rgba(168,85,247,.4),transparent 70%)}
+[data-skin=purple] .tag{color:#e9d5ff;background:rgba(168,85,247,.22)}
+[data-skin=purple] .cam.live .pill i{background:#c084fc}
+[data-skin=purple] .tr.on{background:rgba(168,85,247,.16);box-shadow:inset 3px 0 0 #c084fc}
+[data-skin=purple] .crb th.on{color:#c084fc}
+[data-skin=purple] .mk.m3{color:#c084fc}
+[data-skin=purple] .chips .now{background:#c084fc;color:#1a0b2e}
+[data-skin=purple] .chips .ok{background:rgba(236,72,153,.18);color:#f9a8d4}
+[data-skin=purple] .bars i{background:linear-gradient(180deg,#f0abfc,#7c3aed)}
+[data-skin=purple] .hl path,[data-skin=purple] .hl circle{fill:rgba(192,132,252,.3);stroke:#d8b4fe}
+[data-skin=purple] .hm{fill:#f0abfc}
+[data-skin=purple] .award b{background:linear-gradient(180deg,#fdf4ff,#e879f9 45%,#7c3aed);-webkit-background-clip:text;background-clip:text}
+[data-skin=purple] .menu{background:radial-gradient(900px 500px at 85% -10%,rgba(168,85,247,.38),transparent 60%),radial-gradient(800px 500px at -10% 110%,rgba(236,72,153,.2),transparent 60%),var(--bg)}
+[data-skin=purple] .seg button.on{background:#c084fc;border-color:#c084fc;color:#1a0b2e}
+[data-skin=purple] .empty{background:repeating-radial-gradient(circle at 50% 50%,#1a1029 0 18px,#140c22 18px 36px)}
+[data-skin=purple] input[type=range]{accent-color:#c084fc}
+[data-skin=purple] .logo circle:nth-child(2){stroke:#c084fc}[data-skin=purple] .logo circle:nth-child(3){stroke:#f472b6}[data-skin=purple] .logo circle:nth-child(4){fill:#f472b6}
+[data-skin=purple] .card:nth-child(1){--c1:#9333ea;--c2:#3b0a6b}
+[data-skin=purple] .msel{--c1:#9333ea!important;--c2:#3b0a6b!important}
+[data-skin=purple] .card:nth-child(2){--c1:#c026d3;--c2:#4a0750}
+[data-skin=purple] .card:nth-child(3){--c1:#7c3aed;--c2:#2a0f5c}
+[data-skin=purple] .card:nth-child(4){--c1:#db2777;--c2:#4f0a2b}
+[data-skin=purple] .card:nth-child(5){--c1:#6d28d9;--c2:#1f0b45}
+[data-skin=purple] .card:nth-child(6){--c1:#a21caf;--c2:#3a0640}
+[data-skin=purple] .card,[data-skin=purple] .msel{background:linear-gradient(160deg,var(--c1),var(--c2))!important}
 </style>
 </head>
 <body>
@@ -247,6 +280,7 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
       <option value="0,1">Unterhalb der Scheibe</option><option value="0,-1">Oberhalb der Scheibe</option>
       <option value="-1,0">Links von der Scheibe</option><option value="1,0">Rechts von der Scheibe</option></select></label>
     <label>Empfindlichkeit<input id="iSens" type="range" min="12" max="60" value="28"></label>
+    <label>Design<select id="iSkin"><option value="classic">Klassisch</option><option value="purple">Purple</option></select></label>
     <label>Ansage per Sprache<select id="iVoice"><option value="1">An</option><option value="0">Aus</option></select></label>
   </div>
   <button class="ok" id="bNew">Zum Hauptmenü</button>
@@ -525,6 +559,8 @@ $('mCam').onclick=()=>{$('settings').hidden=false};
 $('mGo').onclick=()=>{$('iPl').value=mPl.map((n,i)=>n.replace(/,/g,' ').trim()||'Spieler '+(i+1)).join(', ');$('win').classList.remove('on');newGame();resetRefs();$('menu').hidden=true;window.scrollTo(0,0)};
 $('bMenu').onclick=showMenu;
 $('bWinMenu').onclick=()=>{$('win').classList.remove('on');showMenu()};
+function skin(v){document.documentElement.dataset.skin=v;document.querySelector('meta[name=theme-color]').content=v==='purple'?'#0f0819':'#0d0f12';store.set('dc_skin',v)}
+$('iSkin').value=store.get('dc_skin')||'classic';skin($('iSkin').value);$('iSkin').addEventListener('change',e=>skin(e.target.value));
 $('bStart').onclick=startCam;
 $('bCal').onclick=()=>{if(!running){hint.textContent='Erst die Kamera starten.';return}startCal()};
 $('bSet').onclick=()=>{$('settings').hidden=false};
