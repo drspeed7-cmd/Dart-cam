@@ -68,6 +68,35 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--s2);color:var(--ivory);flex:none}
 .op .n{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .op .num{font-size:28px;font-weight:700}
+.bcard{margin-top:12px;background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:12px}
+.bwrap{width:min(100%,330px);margin:0 auto;aspect-ratio:1}
+#bsvg{width:100%;height:100%;display:block;filter:drop-shadow(0 10px 24px rgba(0,0,0,.5))}
+#bsvg text{fill:#efe0bd;font:700 17px "Barlow Condensed",Impact,sans-serif;text-anchor:middle;dominant-baseline:middle}
+.hl path,.hl circle{fill:rgba(255,214,64,.28);stroke:#ffd640;stroke-width:2}
+@media(prefers-reduced-motion:no-preference){.hl{animation:hl 1.4s ease-in-out infinite}.fl.go .fp,.fl.go circle{animation:fl .9s ease-out forwards}}
+@keyframes hl{50%{opacity:.45}}
+.fl .fp,.fl circle{fill:#fff;opacity:0}
+@keyframes fl{0%{opacity:.95}100%{opacity:0}}
+.hm{fill:#ffd640;stroke:#0b0c0e;stroke-width:2.5}
+#bhit text{fill:#0b0c0e;font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chips span{min-width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:var(--s2);color:var(--mut);font:700 18px "Barlow Condensed",Impact,sans-serif;padding:0 6px}
+.chips .ok{background:rgba(43,182,115,.2);color:var(--grn)}
+.chips .bad{background:rgba(229,56,59,.18);color:var(--red)}
+.chips .now{background:#ffd640;color:#111}
+.bars{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;height:110px;align-items:end}
+.bars div{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.bars i{width:100%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#ffd640,#e5383b)}
+.bars span{font-size:12px;color:var(--mut)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
+.stats b{display:block;font-size:30px;font-weight:700;color:var(--ivory)}
+.stats span{font-size:12px;color:var(--mut)}
+.award{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:8;opacity:0;background:radial-gradient(circle,rgba(5,6,8,.85),rgba(5,6,8,.4) 70%)}
+.award b{font:800 clamp(56px,16vw,120px)/1 "Barlow Condensed",Impact,sans-serif;text-transform:uppercase;background:linear-gradient(180deg,#fff3b0,#ffd640 45%,#e5383b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 30px rgba(255,180,60,.55));text-align:center;padding:0 12px}
+.award.on{animation:aw 2.2s ease-out forwards}
+@keyframes aw{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1.12)}25%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
+@media(prefers-reduced-motion:reduce){.award.on{animation-name:awf}}
+@keyframes awf{0%,100%{opacity:0}10%,80%{opacity:1}}
 .crb{margin-top:12px;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:8px;overflow-x:auto}
 .crb table{width:100%;border-collapse:collapse;text-align:center}
 .crb th{font-size:13px;color:var(--mut);font-weight:600;padding:6px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -121,6 +150,7 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
     </div>
     <div class="side">
       <section class="hero" id="hero"></section>
+      <section class="bcard"><div class="bwrap" id="bwrap"></div><div id="viz"></div></section>
       <div class="others" id="players"></div>
       <div class="crb" id="crb" hidden></div>
     </div>
@@ -153,6 +183,7 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
   <p class="note" style="margin:0">Tipp: ca. 60–100 cm vor der Scheibe, leicht unter- oder oberhalb, gleichmäßiges Licht.</p>
 </div></section>
 
+<div class="award" id="award"><b></b></div>
 <div class="win" id="win"><div><div class="num" id="winName"></div><p id="winSub">gewinnt</p><button class="ok" id="bWin">Nochmal spielen</button></div></div>
 
 <script>
@@ -206,16 +237,18 @@ let G=null,sel=-1,M=null;
 const clone=o=>JSON.parse(JSON.stringify(o));
 function newGame(){const names=$('iPl').value.split(',').map(s=>s.trim()).filter(Boolean);
   G={mode:$('iMode').value,start:+$('iStart').value,dOut:$('iOut').value==='d',cut:$('iCr').value==='cut',round:1,cur:0,darts:[],done:false,bust:false,over:false,note:''};
-  M=MODES[G.mode];G.pl=(names.length?names:['Spieler 1']).map(n=>({n}));G.pl.forEach(p=>p.st=M.init());G.snap=clone(G.pl.map(p=>p.st));
+  M=MODES[G.mode];G.pl=(names.length?names:['Spieler 1']).map(n=>({n,h:[]}));G.pl.forEach(p=>p.st=M.init());G.snap=clone(G.pl.map(p=>p.st));
   saveSettings();render();say(M.name())}
 function replay(){G.pl.forEach((p,i)=>p.st=clone(G.snap[i]));const p=G.pl[G.cur];G.bust=false;G.done=false;G.note='';let res;
   for(const d of G.darts){d.bust=false;res=M.dart(p,d);if(res==='bust'){d.bust=true;G.bust=true;G.done=true;G.pl.forEach((q,i)=>q.st=clone(G.snap[i]));break}if(res==='win')break}
   if(G.darts.length>=3&&!G.bust&&res!=='win'){G.done=true;if(M.end)G.note=M.end(p)||''}
   render();if(res==='win')finish(p)}
-function addDart(d){if(G.done||G.over)return;G.darts.push(d);say(d.l==='Daneben'?'Daneben':d.l.replace('T','Triple ').replace('D','Double '));replay();
+function addDart(d){if(G.done||G.over)return;G.darts.push(d);flash(d);say(d.l==='Daneben'?'Daneben':d.l.replace('T','Triple ').replace('D','Double '));replay();
+  const aw=!G.bust&&G.darts.length===3?award(G.darts):'';if(aw){showAward(aw);return}
   if(G.bust)say('Überworfen');else if(G.note)say(G.note);else if(G.done&&!G.over&&(G.mode==='x01'||G.mode==='countup'))say(G.darts.reduce((a,d)=>a+d.v,0)+' Punkte')}
 function nextTurn(){if(G.over)return;lastN=0;const p=G.pl[G.cur];
   if(!G.done&&M.end){G.note=M.end(p)||''}
+  p.h=p.h||[];p.h.push(G.mode==='halfit'?(p.st.hit?'hit':'half'):G.bust?0:G.darts.reduce((a,d)=>a+d.v,0));
   G.cur=(G.cur+1)%G.pl.length;if(G.cur===0)G.round++;
   if(M.rounds&&G.round>M.rounds){G.round=M.rounds;const r=[...G.pl].sort(M.rank);if(r.length>1&&M.rank(r[0],r[1])===0){G.over=true;G.done=true;$('winName').textContent='Unentschieden';$('winSub').textContent=M.name()+' · '+M.main(r[0])+' Punkte';$('win').classList.add('on');say('Unentschieden');render();return}finish(r[0]);return}
   if(M.begin)M.begin(G.pl[G.cur]);G.snap=clone(G.pl.map(q=>q.st));G.darts=[];G.done=false;G.bust=false;G.note='';sel=-1;render();
@@ -223,6 +256,50 @@ function nextTurn(){if(G.over)return;lastN=0;const p=G.pl[G.cur];
 function finish(p){G.over=true;G.done=true;$('winName').textContent=p.n;
   $('winSub').textContent=M.name()+' · '+(G.mode==='x01'?'Leg gewonnen':G.mode==='atc'?'als Erster rum':M.main(p)+' Punkte');
   $('win').classList.add('on');say(p.n+' gewinnt!')}
+
+/* ---------- Live-Board & Visualisierungen ---------- */
+const BR=[[170,162,'d'],[162,107,'o'],[107,99,'t'],[99,15.9,'i']];
+function pol(r,a){a=a*Math.PI/180;return[(r*Math.sin(a)).toFixed(1),(-r*Math.cos(a)).toFixed(1)]}
+function sector(r1,r2,a1,a2){const[p1,q1]=pol(r1,a1),[p2,q2]=pol(r1,a2),[p3,q3]=pol(r2,a2),[p4,q4]=pol(r2,a1);return`M${p1} ${q1}A${r1} ${r1} 0 0 1 ${p2} ${q2}L${p3} ${q3}A${r2} ${r2} 0 0 0 ${p4} ${q4}Z`}
+function segPaths(s,ring){if(s===25)return ring==='d'?'<circle r="6.35"/>':ring==='o'?'<circle r="15.9"/>':'<circle r="15.9"/>';
+  const i=ORDER.indexOf(s),a1=i*18-9,a2=a1+18;return BR.filter(b=>!ring||b[2]===ring).map(b=>`<path d="${sector(b[0],b[1],a1,a2)}"/>`).join('')}
+function boardSVG(){let g='';ORDER.forEach((s,i)=>{const a1=i*18-9,a2=a1+18,dark=i%2===0;
+    for(const[r1,r2,k]of BR)g+=`<path d="${sector(r1,r2,a1,a2)}" fill="${k==='d'||k==='t'?(dark?'#d63a35':'#1f9a55'):(dark?'#17191c':'#e9dcc0')}"/>`;
+    const[x,y]=pol(186,i*18);g+=`<text x="${x}" y="${y}">${s}</text>`});
+  return`<svg viewBox="-205 -205 410 410" id="bsvg"><circle r="200" fill="#0b0c0e"/><g stroke="#8b8f96" stroke-width=".7">${g}</g>
+  <circle r="15.9" fill="#1f9a55" stroke="#8b8f96" stroke-width=".7"/><circle r="6.35" fill="#d63a35"/>
+  <g id="bhl" class="hl"></g><g id="bfl" class="fl"></g><g id="bhit"></g></svg>`}
+function targets(){const p=G.pl[G.cur];
+  if(G.mode==='atc')return[[p.st.t>20?25:p.st.t]];
+  if(G.mode==='shanghai')return[[G.round]];
+  if(G.mode==='halfit'){const t=HALF[G.round-1];if(t==='D')return ORDER.map(s=>[s,'d']).concat([[25,'d']]);if(t==='T')return ORDER.map(s=>[s,'t']);return[[t==='B'?25:t]]}
+  if(G.mode==='cricket')return CR.filter(t=>(p.st.mk[t]||0)<3||G.pl.some(q=>(q.st.mk[t]||0)<3)).map(t=>[t]);
+  if(G.mode==='x01'){const c=checkout(p.st.s,3-G.darts.length);if(!c)return[];const f=c.split(' · ')[0];
+    if(f==='Bull')return[[25,'d']];if(f==='25')return[[25,'o']];const m=f[0]==='T'?'t':f[0]==='D'?'d':null;return[[+f.replace(/\D/g,''),m]]}
+  return[]}
+function drawBoard(){if(!$('bsvg'))return;
+  $('bhl').innerHTML=G.done?'':targets().map(([s,r])=>segPaths(s,r)).join('');
+  $('bhit').innerHTML=G.darts.filter(d=>d.mx!=null).map((d,i)=>`<g transform="translate(${d.mx.toFixed(1)} ${d.my.toFixed(1)})"><circle r="9" class="hm"/><text y="3.5">${i+1}</text></g>`).join('')}
+function flash(d){if(!$('bfl')||!d.s)return;$('bfl').innerHTML=segPaths(d.s,d.s===25?(d.m===2?'d':'o'):d.m===3?'t':d.m===2?'d':null).replace(/<path /g,'<path class="fp" ');
+  const r=$('bfl');r.classList.remove('go');void r.getBBox();r.classList.add('go')}
+function vizHTML(){const p=G.pl[G.cur],h=p.h||[];
+  if(G.mode==='atc'){const t=p.st.t;return`<div class="chips">${[...Array(20)].map((_,i)=>`<span class="${i+1<t?'ok':i+1===t?'now':''}">${i+1}</span>`).join('')}<span class="${t>21?'ok':t===21?'now':''}">B</span></div>`}
+  if(G.mode==='halfit')return`<div class="chips">${HALF.map((t,i)=>`<span class="${i+1===G.round?'now':h[i]==='half'?'bad':h[i]?'ok':''}">${t==='B'?'B':t}</span>`).join('')}</div>`;
+  if(G.mode==='shanghai')return`<div class="chips">${[1,2,3,4,5,6,7].map(n=>`<span class="${n===G.round?'now':n<G.round?'ok':''}">${n}</span>`).join('')}</div>`;
+  if(G.mode==='countup'){const mx=Math.max(60,...h);return`<div class="bars">${[...Array(8)].map((_,i)=>`<div><i style="height:${h[i]!=null?Math.max(4,h[i]/mx*100):0}%"></i><span>${h[i]!=null?h[i]:i+1===G.round?'•':''}</span></div>`).join('')}</div>`}
+  if(G.mode==='x01'){const avg=h.length?(h.reduce((a,b)=>a+b,0)/h.length).toFixed(1):'–';const best=h.length?Math.max(...h):'–';
+    return`<div class="stats"><div><b class="num">${avg}</b><span>Ø pro Aufnahme</span></div><div><b class="num">${best}</b><span>Beste Aufnahme</span></div><div><b class="num">${G.round}</b><span>Aufnahme</span></div></div>`}
+  return''}
+/* Awards */
+function award(ds){if(ds.length<3)return'';const v=ds.reduce((a,d)=>a+d.v,0),k=ds.map(d=>d.s+'.'+d.m);
+  if(ds.every(d=>d.s===25))return ds.every(d=>d.m===2)?'Hat Trick':'Bull Trio';
+  if(v===180)return'180!';
+  if(k[0]===k[1]&&k[1]===k[2]&&ds[0].s>0)return'Three in a Bed';
+  if(G.mode==='cricket'){const tr=new Set(ds.filter(d=>d.m===3&&CR.includes(d.s)).map(d=>d.s));if(tr.size===3)return'White Horse';
+    const mk=ds.reduce((a,d)=>a+(CR.includes(d.s)?d.m:0),0);if(mk>=5)return mk+' Marks'}
+  if(G.mode==='x01'||G.mode==='countup'){if(v>=151)return'High Ton';if(v>=100)return'Ton'}
+  return''}
+function showAward(t){const a=$('award');a.querySelector('b').textContent=t;a.classList.remove('on');void a.offsetWidth;a.classList.add('on');say(t.replace('!',''))}
 
 /* Checkout-Vorschlag */
 const THROWS=[];for(let s=20;s>=1;s--)THROWS.push({v:3*s,m:3,l:'T'+s});THROWS.push({v:50,m:2,l:'Bull'},{v:25,m:1,l:'25'});for(let s=20;s>=1;s--)THROWS.push({v:2*s,m:2,l:'D'+s},{v:s,m:1,l:String(s)});
@@ -245,6 +322,7 @@ function render(){
   const rest=G.pl.map((q,i)=>i).filter(i=>i!==G.cur);
   $('players').innerHTML=rest.map(i=>`<div class="op"><div class="av"></div><div class="n"></div><div class="num">${esc(M.main(G.pl[i]))}</div></div>`).join('');
   [...document.querySelectorAll('.op')].forEach((e,k)=>{const n=G.pl[rest[k]].n;e.querySelector('.av').textContent=n.charAt(0).toUpperCase();e.querySelector('.n').textContent=n});
+  $('viz').innerHTML=vizHTML();drawBoard();
   const cb=$('crb');if(G.mode==='cricket'){cb.hidden=false;
     cb.innerHTML=`<table><thead><tr><th></th>${G.pl.map((q,i)=>`<th class="${i===G.cur?'on':''}">${esc(q.n)}</th>`).join('')}</tr></thead><tbody>${CR.map(t=>`<tr><td class="num">${t===25?'Bull':t}</td>${G.pl.map(q=>{const k=Math.min(q.st.mk[t]||0,3);return`<td class="mk m${k}">${MARK[k]}</td>`}).join('')}</tr>`).join('')}</tbody></table>`}else cb.hidden=true;
   drawOverlay()}
@@ -276,7 +354,7 @@ ov.addEventListener('pointerdown',e=>{const r=ov.getBoundingClientRect(),x=(e.cl
   if(cal){cal.push([x,y]);if(cal.length<4){hint.textContent=`Kalibrierung ${cal.length+1}/4: Tippe ${CAL_NAMES[cal.length]}.`;drawOverlay();return}
     H=homog(cal,CAL_MM);Hinv=homog(CAL_MM,cal);store.set('dc_H',H);store.set('dc_Hinv',Hinv);cal=null;mask=null;resetRefs();st.textContent='Bereit – wirf!';drawOverlay();
     hint.textContent='Kalibrierung fertig ✓ Liegen die Ringe auf der Scheibe? Dann einfach werfen. Sonst nochmal „Kalibrieren“.';say('Kalibrierung fertig');setTimeout(()=>{if(!cal&&sel<0)hint.textContent=''},6000);return}
-  if(sel>=0&&H){const[mx,my]=apply(H,x,y);const s=scoreAt(mx,my);Object.assign(G.darts[sel],s,{x,y});sel=-1;hint.textContent='';replay()}});
+  if(sel>=0&&H){const[mx,my]=apply(H,x,y);const s=scoreAt(mx,my);Object.assign(G.darts[sel],s,{x,y,mx,my});sel=-1;hint.textContent='';replay()}});
 
 function drawOverlay(){
   const w=ov.width=ov.clientWidth*devicePixelRatio,h=ov.height=ov.clientHeight*devicePixelRatio;ctx.clearRect(0,0,w,h);
@@ -314,7 +392,7 @@ function step(cur){
   if(changed>maskN*.12){ /* großer Unterschied: Darts gezogen oder Licht geändert */
     if(G.darts.length&&diffCount(cur,empty,th)<maskN*.004){ref=cur;empty=cur;nextTurn()}else{ref=cur}return}
   const tip=findTip(cur,ref,th);ref=cur;if(!tip)return;
-  const[mx,my]=apply(H,tip[0],tip[1]);addDart({...scoreAt(mx,my),x:tip[0],y:tip[1]})}
+  const[mx,my]=apply(H,tip[0],tip[1]);addDart({...scoreAt(mx,my),x:tip[0],y:tip[1],mx,my})}
 function findTip(cur,old,th){
   const[dx,dy]=$('iDir').value.split(',').map(Number);const on=new Uint8Array(cur.length);
   for(let i=0;i<cur.length;i++)if(mask[i]&&Math.abs(cur[i]-old[i])>th)on[i]=1;
@@ -342,6 +420,7 @@ $('bNext').onclick=()=>{nextTurn();resetRefs()};
 $('bUndo').onclick=()=>{if(G.over)return;G.darts.pop();sel=-1;replay();resetRefs()};
 $('bWin').onclick=()=>{$('win').classList.remove('on');newGame();resetRefs()};
 new ResizeObserver(drawOverlay).observe(ov);
+$('bwrap').innerHTML=boardSVG();
 window.dc={addDart,nextTurn,get G(){return G}};
 newGame();
 }
