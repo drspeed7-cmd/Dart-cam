@@ -2,104 +2,146 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dart Cam Scorer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0f12">
+<title>Dart Cam</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* VOICE: Kneipe trifft Turnier – knapp, laut, gut lesbar aus 2 m Entfernung
-   IDEA: die Kreidetafel neben dem Board, nur dass das Handy schreibt
-   PICTURE: das Live-Kamerabild mit eingeblendeten Ringen und Treffern
-   COLOUR and TYPE: Board-Schwarz, Sisal-Beige, Board-Rot & -Grün; Oswald + Inter
-   LAYOUT: Kamera oben, darunter Spieler-Scores groß, Würfe als Chips */
-:root{color-scheme:dark;--bg:#111211;--card:#1c1d1b;--ink:#f1ead8;--mut:#a39c8a;--red:#d8312a;--grn:#1f9a4c;--sis:#e7d6ae}
+/* VOICE: Turnier-TV-Grafik – klar, laut, aus 2 m Entfernung lesbar
+   IDEA: die Score-Einblendung einer Dart-Übertragung
+   PICTURE: Live-Kamera mit Ring-Overlay, daneben die große Restpunktzahl
+   COLOUR and TYPE: Nachtschwarz, Board-Rot und Board-Grün, Sisal-Elfenbein; Barlow Condensed + Inter
+   LAYOUT: Handy: Kamera, Spieler am Wurf, Mitspieler, feste Aktionsleiste. Breit: zwei Spalten */
+:root{color-scheme:dark;--bg:#0d0f12;--s1:#161a1f;--s2:#1f242b;--line:rgba(255,255,255,.08);--ink:#f4efe3;--mut:#8e96a3;--red:#e5383b;--grn:#2bb673;--ivory:#efe0bd;--r:20px}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
-h1,h2,.big{font-family:Oswald,Impact,sans-serif;letter-spacing:.01em;margin:0}
-h1{font-size:28px}
-main{max-width:900px;margin:0 auto;padding:12px max(3vw,12px) 40px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.cam{position:relative;background:#000;border-radius:14px;overflow:hidden;border:2px solid #2b2c29}
+html{-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,rgba(229,56,59,.16),transparent 60%),radial-gradient(900px 500px at -10% 30%,rgba(43,182,115,.10),transparent 60%),var(--bg);background-attachment:fixed;color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip;min-height:100vh}
+.num,h1,h2{font-family:"Barlow Condensed",Impact,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) max(4vw,14px) calc(110px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+header h1{font-size:28px;font-weight:800;margin:0;flex:1;letter-spacing:.02em}
+header h1 span{color:var(--red)}
+.logo{width:34px;height:34px}
+.ib{width:46px;height:46px;display:grid;place-items:center;padding:0;border-radius:14px;background:var(--s1);border:1px solid var(--line)}
+.ib svg{width:22px;height:22px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.layout{display:grid;gap:16px}
+@media(min-width:860px){.layout{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start}.side{position:sticky;top:14px}}
+.cam{position:relative;background:#000;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.45);min-height:220px;aspect-ratio:16/10}
+.cam.live{aspect-ratio:auto}
 .cam video{display:block;width:100%;height:auto}
 .cam canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
-.hint{position:absolute;left:8px;right:8px;top:8px;background:rgba(17,18,17,.82);padding:8px 12px;border-radius:10px;font-size:15px}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;background:repeating-radial-gradient(circle at 50% 50%,#14181d 0 18px,#101317 18px 36px)}
+.empty[hidden]{display:none}
+.empty p{color:var(--mut);margin:12px 0 0;font-size:14px}
+.pill{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;background:rgba(13,15,18,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:6px 12px;border-radius:99px;font-size:13px;font-weight:600;pointer-events:none;border:1px solid var(--line)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--mut)}
+.cam.live .pill i{background:var(--grn);box-shadow:0 0 0 0 rgba(43,182,115,.6);animation:pulse 2s infinite}
+.hint{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(13,15,18,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:10px 14px;border-radius:14px;font-size:15px;pointer-events:none;border:1px solid var(--line)}
 .hint:empty{display:none}
-.hint,.status{pointer-events:none}
-.status{position:absolute;right:8px;bottom:8px;background:rgba(17,18,17,.8);padding:4px 10px;border-radius:99px;font-size:13px}
-button,select,input{font:inherit;font-size:16px;color:var(--ink);background:#2a2b28;border:1px solid #3a3b37;border-radius:10px;min-height:44px;padding:0 14px}
+button,select,input{font:inherit;font-size:16px;color:var(--ink);background:var(--s2);border:1px solid var(--line);border-radius:14px;min-height:48px;padding:0 16px}
 button{cursor:pointer;font-weight:600}
-button.pri{background:var(--red);border-color:var(--red);color:#fff}
-button.ok{background:var(--grn);border-color:var(--grn);color:#fff}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--sis);outline-offset:2px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0}
-.pl{background:var(--card);border-radius:14px;padding:10px 14px;border:2px solid transparent}
-.pl.on{border-color:var(--grn)}
-.pl .n{color:var(--mut);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pl .big{font-size:clamp(40px,11vw,64px);line-height:1}
-.pl .co{font-size:13px;color:var(--sis);min-height:20px}
-.turn{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
-.chip{background:var(--card);border:2px solid #3a3b37;border-radius:12px;padding:6px 14px;min-width:84px;text-align:center}
-.chip b{display:block;font-family:Oswald;font-size:24px}
-.chip.sel{border-color:var(--sis)}
-.chip.bust{border-color:var(--red)}
-.sum{font-family:Oswald;font-size:24px;margin-left:auto;align-self:center}
-.panel{background:var(--card);border-radius:14px;padding:14px;margin-top:14px;display:grid;gap:12px}
-.panel label{display:grid;gap:4px;font-size:14px;color:var(--mut)}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-small{color:var(--mut)}
-.win{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;place-items:center;text-align:center;z-index:5}
+button:active{transform:scale(.97)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--ivory);outline-offset:2px}
+.go{background:linear-gradient(180deg,#f04a4d,#c9282b);border:0;color:#fff;box-shadow:0 8px 24px rgba(229,56,59,.35)}
+.ok{background:linear-gradient(180deg,#36c982,#22985f);border:0;color:#fff}
+.hero{position:relative;border-radius:var(--r);padding:18px 18px 16px;background:linear-gradient(160deg,#1c2128,#12151a);border:1px solid var(--line);overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(229,56,59,.25),transparent 70%)}
+.who{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--mut);font-size:14px}
+.who b{color:var(--ink);font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:12px;font-weight:600;color:var(--grn);background:rgba(43,182,115,.12);padding:3px 10px;border-radius:99px;white-space:nowrap}
+.score{font-size:clamp(84px,24vw,132px);font-weight:800;line-height:.9;margin:6px 0 4px;letter-spacing:-.01em}
+.co{min-height:30px}
+.co span{display:inline-block;font-size:14px;font-weight:600;color:var(--ivory);background:rgba(239,224,189,.1);border:1px solid rgba(239,224,189,.2);padding:4px 12px;border-radius:99px}
+.slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.slot{min-height:74px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.14);display:grid;place-items:center;color:var(--mut);font-size:13px;padding:6px;text-align:center;line-height:1.1}
+.slot.f{border:1.5px solid var(--line);background:var(--s2);color:var(--ink)}
+.slot.f b{display:block;font-family:"Barlow Condensed",Impact,sans-serif;font-size:28px;font-weight:700}
+.slot.t3 b{color:var(--red)}.slot.t2 b{color:var(--grn)}
+.slot.sel{border-color:var(--ivory);box-shadow:0 0 0 3px rgba(239,224,189,.2)}
+.slot.bust{border-color:var(--red);background:rgba(229,56,59,.12)}
+.sum{display:flex;justify-content:space-between;margin-top:12px;color:var(--mut);font-size:14px}
+.sum b{font-family:"Barlow Condensed",Impact,sans-serif;font-size:22px;color:var(--ink)}
+.sum.bust b{color:var(--red)}
+.others{display:grid;gap:8px;margin-top:12px}
+.op{display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:10px 14px}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--s2);color:var(--ivory);flex:none}
+.op .n{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.op .num{font-size:28px;font-weight:700}
+.note{color:var(--mut);font-size:13px;margin:12px 2px 0}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:3;padding:10px max(4vw,14px) calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(13,15,18,.95) 30%)}
+.bar div{max-width:620px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px}
+.bar button{min-height:54px;padding:0 8px;font-size:15px;background:rgba(31,36,43,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.bar .go{background:linear-gradient(180deg,#f04a4d,#c9282b)}
+.sheet{position:fixed;inset:0;z-index:6;display:grid;align-items:end;background:rgba(0,0,0,.55)}
+.sheet[hidden]{display:none}
+.sheet>div{background:var(--s1);border-radius:24px 24px 0 0;border:1px solid var(--line);padding:10px 18px calc(18px + env(safe-area-inset-bottom));max-width:620px;width:100%;margin:0 auto;display:grid;gap:14px;max-height:90vh;overflow:auto}
+.grab{width:44px;height:5px;border-radius:9px;background:rgba(255,255,255,.2);margin:0 auto}
+.sheet h2{margin:0;font-size:26px}
+.sheet label{display:grid;gap:6px;font-size:14px;color:var(--mut)}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
+.win{position:fixed;inset:0;background:rgba(5,6,8,.88);backdrop-filter:blur(8px);display:none;place-items:center;text-align:center;z-index:7;padding:20px}
 .win.on{display:grid}
-.win .big{font-size:56px;color:var(--sis)}
-@media (prefers-reduced-motion:no-preference){.pl{transition:border-color .3s}}
+.win .num{font-size:clamp(52px,14vw,96px);font-weight:800;color:var(--ivory);line-height:1}
+.win p{color:var(--mut);margin:8px 0 22px}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(43,182,115,.6)}70%{box-shadow:0 0 0 8px rgba(43,182,115,0)}100%{box-shadow:0 0 0 0 rgba(43,182,115,0)}}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:no-preference){.slot.f.new{animation:pop .25s ease-out}}
+@media(prefers-reduced-motion:reduce){.cam.live .pill i{animation:none}}
 </style>
 </head>
 <body>
 <main>
-  <div class="top">
-    <h1>Dart Cam Scorer</h1>
-    <div class="row">
-      <button id="bCal">Kalibrieren</button>
-      <button id="bSet">Einstellungen</button>
+  <header>
+    <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1f242b"/><circle cx="20" cy="20" r="14" fill="none" stroke="#2bb673" stroke-width="3"/><circle cx="20" cy="20" r="8" fill="none" stroke="#e5383b" stroke-width="3"/><circle cx="20" cy="20" r="3" fill="#e5383b"/></svg>
+    <h1>Dart <span>Cam</span></h1>
+    <button class="ib" id="bCal" aria-label="Kalibrieren" title="Kalibrieren"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+    <button class="ib" id="bSet" aria-label="Einstellungen" title="Einstellungen"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+  </header>
+
+  <div class="layout">
+    <div>
+      <div class="cam" id="cam">
+        <video id="vid" playsinline muted autoplay></video>
+        <canvas id="ov"></canvas>
+        <div class="empty" id="empty"><div><button class="go" id="bStart">Kamera starten</button><p>Handy fest vor der Scheibe montieren</p></div></div>
+        <div class="pill"><i></i><span id="st">Kamera aus</span></div>
+        <div class="hint" id="hint"></div>
+      </div>
+      <p class="note" id="tip">Falsch erkannt? Tippe den Wurf an und dann auf die richtige Stelle im Kamerabild.</p>
+    </div>
+    <div class="side">
+      <section class="hero" id="hero"></section>
+      <div class="others" id="players"></div>
     </div>
   </div>
-
-  <div class="cam" id="cam">
-    <video id="vid" playsinline muted autoplay></video>
-    <canvas id="ov"></canvas>
-    <div class="hint" id="hint">Tippe auf „Kamera starten“.</div>
-    <div class="status" id="st">Kamera aus</div>
-  </div>
-
-  <div class="row" style="margin-top:10px">
-    <button class="pri" id="bStart">Kamera starten</button>
-    <button id="bMiss">Daneben (0)</button>
-    <button id="bNext">Nächster Spieler</button>
-    <button id="bUndo">Letzten Dart löschen</button>
-  </div>
-
-  <div class="players" id="players"></div>
-  <div class="turn" id="turn"></div>
-  <small id="tip">Tipp: Tippe einen Wurf an und dann auf die richtige Stelle im Kamerabild, um ihn zu korrigieren.</small>
-
-  <section class="panel" id="settings" hidden>
-    <h2>Einstellungen</h2>
-    <div class="grid2">
-      <label>Spieler (durch Komma getrennt)<input id="iPl" value="Spieler 1, Spieler 2"></label>
-      <label>Startpunkte<select id="iStart"><option>501</option><option>301</option><option>701</option></select></label>
-      <label>Finish<select id="iOut"><option value="d">Double Out</option><option value="s">Single Out</option></select></label>
-      <label>Wo hängt das Handy?<select id="iDir">
-        <option value="0,1">Unterhalb der Scheibe</option><option value="0,-1">Oberhalb der Scheibe</option>
-        <option value="-1,0">Links von der Scheibe</option><option value="1,0">Rechts von der Scheibe</option></select></label>
-      <label>Empfindlichkeit<input id="iSens" type="range" min="12" max="60" value="28"></label>
-      <label>Ansage per Sprache<select id="iVoice"><option value="1">An</option><option value="0">Aus</option></select></label>
-    </div>
-    <div class="row"><button class="ok" id="bNew">Neues Spiel</button></div>
-    <small>Das Handy fest montieren (Stativ/Halter), ca. 60–100 cm vor der Scheibe, etwas unter- oder oberhalb, damit es nicht im Weg ist. Gleichmäßiges Licht hilft am meisten.</small>
-  </section>
 </main>
 
-<div class="win" id="win"><div><div class="big" id="winName"></div><p>hat das Leg gewonnen!</p><button class="ok" id="bWin">Neues Leg</button></div></div>
+<nav class="bar"><div>
+  <button id="bMiss">Daneben</button>
+  <button id="bUndo">Rückgängig</button>
+  <button class="go" id="bNext">Nächster ›</button>
+</div></nav>
+
+<section class="sheet" id="settings" hidden><div>
+  <div class="grab"></div>
+  <h2>Spiel &amp; Kamera</h2>
+  <div class="g2">
+    <label>Spieler (durch Komma getrennt)<input id="iPl" value="Spieler 1, Spieler 2"></label>
+    <label>Startpunkte<select id="iStart"><option>501</option><option>301</option><option>701</option></select></label>
+    <label>Finish<select id="iOut"><option value="d">Double Out</option><option value="s">Single Out</option></select></label>
+    <label>Wo hängt das Handy?<select id="iDir">
+      <option value="0,1">Unterhalb der Scheibe</option><option value="0,-1">Oberhalb der Scheibe</option>
+      <option value="-1,0">Links von der Scheibe</option><option value="1,0">Rechts von der Scheibe</option></select></label>
+    <label>Empfindlichkeit<input id="iSens" type="range" min="12" max="60" value="28"></label>
+    <label>Ansage per Sprache<select id="iVoice"><option value="1">An</option><option value="0">Aus</option></select></label>
+  </div>
+  <button class="ok" id="bNew">Neues Spiel starten</button>
+  <p class="note" style="margin:0">Tipp: ca. 60–100 cm vor der Scheibe, leicht unter- oder oberhalb, gleichmäßiges Licht.</p>
+</div></section>
+
+<div class="win" id="win"><div><div class="num" id="winName"></div><p>gewinnt das Leg</p><button class="ok" id="bWin">Neues Leg</button></div></div>
 
 <script>
 {
@@ -130,7 +172,7 @@ function replay(){const p=G.pl[G.cur];let s=G.ts;G.bust=false;G.done=false;
   if(G.darts.length>=3)G.done=true;p.s=s;render()}
 function addDart(d){if(G.done)return;G.darts.push(d);say(d.l==='Daneben'?'Daneben':d.l.replace('T','Triple ').replace('D','Double '));replay();
   if(G.bust)say('Überworfen');else if(G.done&&G.pl[G.cur].s>0){const t=G.darts.reduce((a,d)=>a+d.v,0);say(t+' Punkte')}}
-function nextTurn(){if(G.pl[G.cur].s===0)return;G.cur=(G.cur+1)%G.pl.length;G.darts=[];G.ts=G.pl[G.cur].s;G.done=false;G.bust=false;sel=-1;render();say(G.pl[G.cur].n+', noch '+G.ts)}
+function nextTurn(){lastN=0;if(G.pl[G.cur].s===0)return;G.cur=(G.cur+1)%G.pl.length;G.darts=[];G.ts=G.pl[G.cur].s;G.done=false;G.bust=false;sel=-1;render();say(G.pl[G.cur].n+', noch '+G.ts)}
 function win(n){$('winName').textContent=n;$('win').classList.add('on');say(n+' gewinnt!')}
 
 /* Checkout-Vorschlag */
@@ -139,15 +181,22 @@ function checkout(rest,n){if(rest>170||rest<2&&G.dOut)return'';const fin=THROWS.
   for(let k=1;k<=n;k++){const r=find(rest,k,fin);if(r)return r.join(' · ')}return''}
 function find(rest,k,fin){if(k===1){const f=fin.find(t=>t.v===rest);return f?[f.l]:null}for(const t of THROWS){if(t.v>=rest)continue;const r=find(rest-t.v,k-1,fin);if(r)return[t.l,...r]}return null}
 
+let lastN=0;
 function render(){
-  $('players').innerHTML=G.pl.map((p,i)=>`<div class="pl${i===G.cur?' on':''}"><div class="n"></div><div class="big">${p.s}</div><div class="co">${i===G.cur&&!G.done?esc(checkout(p.s,3-G.darts.length)):''}</div></div>`).join('');
-  [...document.querySelectorAll('.pl .n')].forEach((e,i)=>e.textContent=G.pl[i].n);
-  const sum=G.darts.reduce((a,d)=>a+d.v,0);
-  $('turn').innerHTML=G.darts.map((d,i)=>`<button class="chip${i===sel?' sel':''}${d.bust?' bust':''}" data-i="${i}"><b>${esc(d.l)}</b>${d.v}</button>`).join('')+
-    `<span class="sum">${G.bust?'Überworfen':sum+' Punkte'}</span>`;
+  const p=G.pl[G.cur],sum=G.darts.reduce((a,d)=>a+d.v,0),co=!G.done?checkout(p.s,3-G.darts.length):'';
+  const slots=[0,1,2].map(i=>{const d=G.darts[i];if(!d)return`<div class="slot">Dart ${i+1}</div>`;
+    return`<button class="slot f t${d.m}${i===sel?' sel':''}${d.bust?' bust':''}${i>=lastN?' new':''}" data-i="${i}"><span><b>${esc(d.l)}</b>${d.v} P.</span></button>`}).join('');
+  lastN=G.darts.length;
+  $('hero').innerHTML=`<div class="who"><b id="pn"></b><span class="tag">am Wurf</span></div><div class="score num">${p.s}</div>
+    <div class="co">${co?`<span>Checkout: ${esc(co)}</span>`:''}</div><div class="slots" id="turn">${slots}</div>
+    <div class="sum${G.bust?' bust':''}"><span>Diese Runde</span><b>${G.bust?'Überworfen':sum+' Punkte'}</b></div>`;
+  $('pn').textContent=p.n;
+  const rest=G.pl.map((q,i)=>i).filter(i=>i!==G.cur);
+  $('players').innerHTML=rest.map(i=>`<div class="op"><div class="av"></div><div class="n"></div><div class="num">${G.pl[i].s}</div></div>`).join('');
+  [...document.querySelectorAll('.op')].forEach((e,k)=>{const n=G.pl[rest[k]].n;e.querySelector('.av').textContent=n.charAt(0).toUpperCase();e.querySelector('.n').textContent=n});
   drawOverlay()}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';')}
-$('turn').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const i=+b.dataset.i;sel=sel===i?-1:i;render();
+$('hero').addEventListener('click',e=>{const b=e.target.closest('.slot.f');if(!b)return;const i=+b.dataset.i;sel=sel===i?-1:i;render();
   if(sel>=0)hint.textContent='Tippe im Kamerabild auf die richtige Stelle dieses Darts.';else hint.textContent=''});
 
 /* ---------- Sprache ---------- */
@@ -160,7 +209,7 @@ async function startCam(){
   try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});vid.srcObject=s;await vid.play()}
   catch(e){hint.textContent='Kamera nicht verfügbar: '+e.message;return}
   try{await navigator.wakeLock?.request('screen')}catch(e){}
-  $('bStart').hidden=true;running=true;
+  $('empty').hidden=true;$('cam').classList.add('live');running=true;
   if(!H)startCal();else{hint.textContent='';resetRefs();st.textContent='Bereit – wirf!'}
   loop()}
 function startCal(){cal=[];hint.textContent='Kalibrierung 1/4: Tippe '+CAL_NAMES[0]+'.';drawOverlay()}
@@ -223,7 +272,8 @@ const S=store.get('dc_set');if(S){$('iPl').value=S.pl;$('iStart').value=S.st;$('
 ['iDir','iSens','iVoice'].forEach(id=>$(id).addEventListener('change',saveSettings));
 $('bStart').onclick=startCam;
 $('bCal').onclick=()=>{if(!running){hint.textContent='Erst die Kamera starten.';return}startCal()};
-$('bSet').onclick=()=>{$('settings').hidden=!$('settings').hidden};
+$('bSet').onclick=()=>{$('settings').hidden=false};
+$('settings').addEventListener('click',e=>{if(e.target.id==='settings')$('settings').hidden=true});
 $('bNew').onclick=()=>{newGame();resetRefs();$('settings').hidden=true};
 $('bMiss').onclick=()=>addDart({v:0,m:0,l:'Daneben'});
 $('bNext').onclick=()=>{nextTurn();resetRefs()};
