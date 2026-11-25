@@ -97,6 +97,39 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 @keyframes aw{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1.12)}25%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
 @media(prefers-reduced-motion:reduce){.award.on{animation-name:awf}}
 @keyframes awf{0%,100%{opacity:0}10%,80%{opacity:1}}
+.menu{position:fixed;inset:0;z-index:9;overflow:auto;background:radial-gradient(900px 500px at 85% -10%,rgba(229,56,59,.22),transparent 60%),radial-gradient(800px 500px at -10% 110%,rgba(43,182,115,.16),transparent 60%),var(--bg)}
+.menu[hidden]{display:none}
+.mi{max-width:760px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) max(4vw,16px) calc(28px + env(safe-area-inset-bottom));display:grid;gap:18px}
+.mhead{display:flex;gap:14px;align-items:center}
+.logo.big{width:56px;height:56px;flex:none}
+.mhead h1{font-size:40px;font-weight:800;margin:0;line-height:1}
+.mhead h1 span{color:var(--red)}
+.mhead p{margin:4px 0 0;color:var(--mut)}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(min-width:640px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.card{position:relative;text-align:left;display:grid;gap:6px;align-content:start;padding:16px;min-height:168px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(160deg,var(--c1),var(--c2));overflow:hidden;color:#fff}
+.card svg{width:46px;height:46px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;margin-bottom:4px}
+.card b{font:700 26px/1 "Barlow Condensed",Impact,sans-serif;letter-spacing:.01em}
+.card span{font-size:13px;line-height:1.35;color:rgba(255,255,255,.82)}
+.card::after{content:"";position:absolute;right:-30px;bottom:-30px;width:110px;height:110px;border-radius:50%;border:14px solid rgba(255,255,255,.08)}
+.ghost{background:transparent;border:1px dashed rgba(255,255,255,.22);color:var(--ink);width:100%}
+.back{background:none;border:0;padding:0;color:var(--mut);min-height:36px;justify-self:start}
+.msel{display:flex;gap:14px;align-items:center;padding:16px;border-radius:20px;background:linear-gradient(160deg,var(--c1),var(--c2));color:#fff}
+.msel svg{width:52px;height:52px;flex:none;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.msel b{display:block;font:700 30px/1 "Barlow Condensed",Impact,sans-serif}
+.msel span{font-size:14px;color:rgba(255,255,255,.85)}
+.opt{display:grid;gap:10px}
+#mStep2{display:grid;gap:14px}#mStep2[hidden]{display:none}#mStep1{display:grid;gap:14px}#mStep1[hidden]{display:none}
+.opt h3,.mi h3{margin:0;font-size:14px;color:var(--mut);font-weight:600}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:70px;background:var(--s1)}
+.seg button.on{background:var(--ink);color:#111;border-color:var(--ink)}
+.plist{display:grid;gap:8px}
+.plist div{display:flex;gap:8px}
+.plist input{flex:1}
+.plist button{width:48px;padding:0}
+.wide{width:100%;min-height:58px;font-size:18px}
+.row2{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .crb{margin-top:12px;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:8px;overflow-x:auto}
 .crb table{width:100%;border-collapse:collapse;text-align:center}
 .crb th{font-size:13px;color:var(--mut);font-weight:600;padding:6px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -110,7 +143,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .bar div{max-width:620px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px}
 .bar button{min-height:54px;padding:0 8px;font-size:15px;background:rgba(31,36,43,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .bar .go{background:linear-gradient(180deg,#f04a4d,#c9282b)}
-.sheet{position:fixed;inset:0;z-index:6;display:grid;align-items:end;background:rgba(0,0,0,.55)}
+.sheet{position:fixed;inset:0;z-index:10;display:grid;align-items:end;background:rgba(0,0,0,.55)}
 .sheet[hidden]{display:none}
 .sheet>div{background:var(--s1);border-radius:24px 24px 0 0;border:1px solid var(--line);padding:10px 18px calc(18px + env(safe-area-inset-bottom));max-width:620px;width:100%;margin:0 auto;display:grid;gap:14px;max-height:90vh;overflow:auto}
 .grab{width:44px;height:5px;border-radius:9px;background:rgba(255,255,255,.2);margin:0 auto}
@@ -129,10 +162,39 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
 </style>
 </head>
 <body>
+<div hidden>
+  <input id="iPl" value="Spieler 1, Spieler 2">
+  <select id="iMode"><option value="x01">x01</option><option value="cricket">cricket</option><option value="countup">countup</option><option value="atc">atc</option><option value="halfit">halfit</option><option value="shanghai">shanghai</option></select>
+  <select id="iStart"><option>501</option><option>301</option><option>701</option><option>901</option></select>
+  <select id="iOut"><option value="d">d</option><option value="s">s</option></select>
+  <select id="iCr"><option value="std">std</option><option value="cut">cut</option></select>
+</div>
+<section class="menu" id="menu">
+ <div class="mi">
+  <div class="mhead">
+    <svg class="logo big" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1f242b"/><circle cx="20" cy="20" r="14" fill="none" stroke="#2bb673" stroke-width="3"/><circle cx="20" cy="20" r="8" fill="none" stroke="#e5383b" stroke-width="3"/><circle cx="20" cy="20" r="3" fill="#e5383b"/></svg>
+    <div><h1>Dart <span>Cam</span></h1><p>Wähle ein Spiel – die Kamera zählt mit.</p></div>
+  </div>
+  <div id="mStep1">
+    <div class="cards" id="cards"></div>
+    <button class="ghost" id="mCam">Kamera &amp; Ton einstellen</button>
+  </div>
+  <div id="mStep2" hidden>
+    <button class="back" id="mBack">‹ Alle Spiele</button>
+    <div class="msel" id="mSel"></div>
+    <div class="opt" id="mOpts"></div>
+    <h3>Spieler</h3>
+    <div class="plist" id="mPl"></div>
+    <button class="ghost" id="mAdd">+ Spieler hinzufügen</button>
+    <button class="go wide" id="mGo">Spiel starten</button>
+  </div>
+ </div>
+</section>
 <main>
   <header>
     <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1f242b"/><circle cx="20" cy="20" r="14" fill="none" stroke="#2bb673" stroke-width="3"/><circle cx="20" cy="20" r="8" fill="none" stroke="#e5383b" stroke-width="3"/><circle cx="20" cy="20" r="3" fill="#e5383b"/></svg>
     <h1>Dart <span>Cam</span></h1>
+    <button class="ib" id="bMenu" aria-label="Hauptmenü" title="Hauptmenü"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></button>
     <button class="ib" id="bCal" aria-label="Kalibrieren" title="Kalibrieren"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
     <button class="ib" id="bSet" aria-label="Einstellungen" title="Einstellungen"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
   </header>
@@ -165,26 +227,20 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
 
 <section class="sheet" id="settings" hidden><div>
   <div class="grab"></div>
-  <h2>Spiel &amp; Kamera</h2>
+  <h2>Kamera &amp; Ton</h2>
   <div class="g2">
-    <label>Spieler (durch Komma getrennt)<input id="iPl" value="Spieler 1, Spieler 2"></label>
-    <label>Spielmodus<select id="iMode"><option value="x01">01-Spiel (301/501 …)</option><option value="cricket">Cricket</option><option value="countup">Count-Up</option><option value="atc">Around the Clock</option><option value="halfit">Half-It</option><option value="shanghai">Shanghai</option></select></label>
-    <label data-for="x01">Startpunkte<select id="iStart"><option>501</option><option>301</option><option>701</option><option>901</option></select></label>
-    <label data-for="x01">Finish<select id="iOut"><option value="d">Double Out</option><option value="s">Single Out</option></select></label>
-    <label data-for="cricket">Cricket-Variante<select id="iCr"><option value="std">Standard</option><option value="cut">Cut-Throat</option></select></label>
-    <p class="note" id="mInfo" style="grid-column:1/-1;margin:0"></p>
     <label>Wo hängt das Handy?<select id="iDir">
       <option value="0,1">Unterhalb der Scheibe</option><option value="0,-1">Oberhalb der Scheibe</option>
       <option value="-1,0">Links von der Scheibe</option><option value="1,0">Rechts von der Scheibe</option></select></label>
     <label>Empfindlichkeit<input id="iSens" type="range" min="12" max="60" value="28"></label>
     <label>Ansage per Sprache<select id="iVoice"><option value="1">An</option><option value="0">Aus</option></select></label>
   </div>
-  <button class="ok" id="bNew">Neues Spiel starten</button>
+  <button class="ok" id="bNew">Zum Hauptmenü</button>
   <p class="note" style="margin:0">Tipp: ca. 60–100 cm vor der Scheibe, leicht unter- oder oberhalb, gleichmäßiges Licht.</p>
 </div></section>
 
 <div class="award" id="award"><b></b></div>
-<div class="win" id="win"><div><div class="num" id="winName"></div><p id="winSub">gewinnt</p><button class="ok" id="bWin">Nochmal spielen</button></div></div>
+<div class="win" id="win"><div><div class="num" id="winName"></div><p id="winSub">gewinnt</p><div class="row2"><button id="bWinMenu">Hauptmenü</button><button class="ok" id="bWin">Nochmal spielen</button></div></div></div>
 
 <script>
 window.addEventListener('error',e=>{const h=document.getElementById('hint');if(h)h.textContent='Fehler: '+e.message});
@@ -408,13 +464,45 @@ function saveSettings(){store.set('dc_set',{mo:$('iMode').value,cr:$('iCr').valu
 const S=store.get('dc_set');if(S){if(S.mo)$('iMode').value=S.mo;if(S.cr)$('iCr').value=S.cr;$('iPl').value=S.pl;$('iStart').value=S.st;$('iOut').value=S.o;$('iDir').value=S.d;$('iSens').value=S.s;$('iVoice').value=S.v}
 ['iDir','iSens','iVoice'].forEach(id=>$(id).addEventListener('change',saveSettings));
 const INFO={x01:'Von der Startzahl runter auf genau 0. Bei Double Out muss der letzte Dart ein Double oder Bull sein.',cricket:'20 bis 15 und Bull je 3-mal treffen, um sie zu schließen. Danach gibt es Punkte, solange der Gegner offen ist. Cut-Throat: Punkte gehen an die Gegner, wenig ist gut. Max. 20 Runden.',countup:'8 Runden, alle Punkte zählen. Höchste Summe gewinnt.',atc:'1 bis 20 der Reihe nach treffen, zum Schluss Bull. Wer zuerst durch ist, gewinnt.',halfit:'Start mit 40. Jede Runde ein Ziel (15, 16, Double, 17, 18, Triple, 19, 20, Bull). Kein Treffer in der Runde = Punkte halbiert.',shanghai:'7 Runden, Ziel ist die Rundenzahl. Single, Double und Triple der Zahl in einer Runde = sofortiger Sieg.'};
-function modeUI(){const m=$('iMode').value;document.querySelectorAll('[data-for]').forEach(e=>e.hidden=e.dataset.for!==m);$('mInfo').textContent=INFO[m]}
-$('iMode').addEventListener('change',modeUI);modeUI();
+/* ---------- Hauptmenü ---------- */
+const ICON={x01:'<svg viewBox="0 0 48 48"><circle cx="20" cy="28" r="16"/><circle cx="20" cy="28" r="8"/><circle cx="20" cy="28" r="1.5" fill="#fff"/><path d="M20 28L42 6M34 6h8v8"/></svg>',
+ cricket:'<svg viewBox="0 0 48 48"><path d="M8 12l8 8M16 12l-8 8M22 16h18M8 30l8 8M16 30l-8 8M22 34h18"/><circle cx="12" cy="34" r="7"/></svg>',
+ countup:'<svg viewBox="0 0 48 48"><path d="M8 40h32M12 40V30M20 40V24M28 40V16M36 40V8"/></svg>',
+ atc:'<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="18"/><path d="M24 12v12l8 5"/><path d="M24 2v4M46 24h-4M24 46v-4M2 24h4"/></svg>',
+ halfit:'<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="18"/><path d="M24 6v36" /><path d="M24 6a18 18 0 0 1 0 36z" fill="#fff" fill-opacity=".35"/></svg>',
+ shanghai:'<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="6"/><circle cx="24" cy="24" r="12"/><circle cx="24" cy="24" r="18"/><path d="M36 8l-9 13"/></svg>'};
+const MENU=[['x01','01-Spiel','301 bis 901 auf genau null runterspielen','#c9282b','#5e1214'],
+ ['cricket','Cricket','15–20 & Bull schließen und punkten','#1f8f57','#0b3b24'],
+ ['countup','Count-Up','8 Runden – so viele Punkte wie möglich','#d0811b','#5a3207'],
+ ['atc','Around the Clock','1 bis 20, dann Bull – wer ist zuerst rum?','#2b6fd6','#0f2a57'],
+ ['halfit','Half-It','Ziel verfehlt? Punkte halbiert!','#7a4bd1','#2c1660'],
+ ['shanghai','Shanghai','7 Runden – Single, Double, Triple = Sieg','#c23a8a','#4d0f33']];
+let mPl=[];
+function seg(id,opts){const cur=$(id).value;return`<div class="seg" data-id="${id}">${opts.map(([v,l])=>`<button type="button" data-v="${v}" class="${v===cur?'on':''}">${l}</button>`).join('')}</div>`}
+function showMenu(){$('menu').hidden=false;$('mStep1').hidden=false;$('mStep2').hidden=true;
+  $('cards').innerHTML=MENU.map(([k,n,d,c1,c2])=>`<button class="card" data-m="${k}" style="--c1:${c1};--c2:${c2}">${ICON[k]}<b>${n}</b><span>${d}</span></button>`).join('')}
+function pickMode(k){const m=MENU.find(x=>x[0]===k);$('iMode').value=k;$('mStep1').hidden=true;$('mStep2').hidden=false;
+  const ms=$('mSel');ms.style.setProperty('--c1',m[3]);ms.style.setProperty('--c2',m[4]);ms.innerHTML=ICON[k]+`<div><b>${m[1]}</b><span></span></div>`;ms.querySelector('span').textContent=INFO[k];
+  $('mOpts').innerHTML=k==='x01'?`<h3>Startpunkte</h3>${seg('iStart',[['301','301'],['501','501'],['701','701'],['901','901']])}<h3>Finish</h3>${seg('iOut',[['d','Double Out'],['s','Single Out']])}`:
+    k==='cricket'?`<h3>Variante</h3>${seg('iCr',[['std','Standard'],['cut','Cut-Throat']])}`:'';
+  mPl=$('iPl').value.split(',').map(x=>x.trim()).filter(Boolean);if(!mPl.length)mPl=['Spieler 1'];drawPl();$('menu').scrollTop=0}
+function drawPl(){$('mPl').innerHTML=mPl.map((n,i)=>`<div><input data-i="${i}" maxlength="16" aria-label="Spieler ${i+1}"><button type="button" data-del="${i}" aria-label="Entfernen"${mPl.length<2?' disabled':''}>✕</button></div>`).join('');
+  [...$('mPl').querySelectorAll('input')].forEach((e,i)=>e.value=mPl[i]);$('mAdd').hidden=mPl.length>=8}
+$('cards').addEventListener('click',e=>{const c=e.target.closest('.card');if(c)pickMode(c.dataset.m)});
+$('mOpts').addEventListener('click',e=>{const b=e.target.closest('.seg button');if(!b)return;const g=b.parentNode;$(g.dataset.id).value=b.dataset.v;g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))});
+$('mPl').addEventListener('input',e=>{if(e.target.dataset.i!=null)mPl[+e.target.dataset.i]=e.target.value});
+$('mPl').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(d&&mPl.length>1){mPl.splice(+d.dataset.del,1);drawPl()}});
+$('mAdd').onclick=()=>{mPl.push('Spieler '+(mPl.length+1));drawPl()};
+$('mBack').onclick=showMenu;
+$('mCam').onclick=()=>{$('settings').hidden=false};
+$('mGo').onclick=()=>{$('iPl').value=mPl.map((n,i)=>n.replace(/,/g,' ').trim()||'Spieler '+(i+1)).join(', ');$('win').classList.remove('on');newGame();resetRefs();$('menu').hidden=true;window.scrollTo(0,0)};
+$('bMenu').onclick=showMenu;
+$('bWinMenu').onclick=()=>{$('win').classList.remove('on');showMenu()};
 $('bStart').onclick=startCam;
 $('bCal').onclick=()=>{if(!running){hint.textContent='Erst die Kamera starten.';return}startCal()};
 $('bSet').onclick=()=>{$('settings').hidden=false};
 $('settings').addEventListener('click',e=>{if(e.target.id==='settings')$('settings').hidden=true});
-$('bNew').onclick=()=>{newGame();resetRefs();$('settings').hidden=true};
+$('bNew').onclick=()=>{$('settings').hidden=true;showMenu()};
 $('bMiss').onclick=()=>addDart({v:0,m:0,s:0,l:'Daneben'});
 $('bNext').onclick=()=>{nextTurn();resetRefs()};
 $('bUndo').onclick=()=>{if(G.over)return;G.darts.pop();sel=-1;replay();resetRefs()};
@@ -422,7 +510,7 @@ $('bWin').onclick=()=>{$('win').classList.remove('on');newGame();resetRefs()};
 new ResizeObserver(drawOverlay).observe(ov);
 $('bwrap').innerHTML=boardSVG();
 window.dc={addDart,nextTurn,get G(){return G}};
-newGame();
+newGame();showMenu();
 }
 </script>
 </body>
