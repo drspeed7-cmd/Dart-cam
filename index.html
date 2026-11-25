@@ -413,7 +413,7 @@ $('hero').addEventListener('click',e=>{const b=e.target.closest('.slot.f');if(!b
   if(sel>=0)hint.textContent='Tippe im Kamerabild auf die richtige Stelle dieses Darts.';else hint.textContent=''});
 
 /* ---------- Sprache ---------- */
-function say(t){if($('iVoice').value!=='1'||!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';speechSynthesis.speak(u)}catch(e){}}
+function say(t){if($('iVoice').value!=='1')return;if(window.DartCamApp){try{DartCamApp.speak(t)}catch(e){}return}if(!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';speechSynthesis.speak(u)}catch(e){}}
 
 /* ---------- Kamera & Kalibrierung ---------- */
 let H=store.get('dc_H'),Hinv=store.get('dc_Hinv'),cal=null,running=false;
