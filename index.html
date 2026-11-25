@@ -129,6 +129,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .plist input{flex:1}
 .plist button{width:48px;padding:0}
 .wide{width:100%;min-height:58px;font-size:18px}
+.row2[hidden]{display:none!important}
 .row2{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .tab{background:var(--s1);border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .th{padding:10px 14px;font-size:13px;color:var(--mut);font-weight:600;border-bottom:1px solid var(--line)}
@@ -142,6 +143,12 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .tr .x{font-size:13px;color:var(--mut);white-space:nowrap}
 .tr .v{font-size:28px;font-weight:700;text-align:right}
 .wt{max-width:420px;margin:0 auto 18px;text-align:left}
+.lk{display:grid;gap:10px;padding:12px;border-radius:16px;background:var(--s2);border:1px solid var(--line)}
+.lkst{margin:0;font-weight:600;color:var(--ivory)}
+.lkb{font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--s2);color:var(--mut);white-space:nowrap}
+.lkb.on{color:var(--grn);background:rgba(43,182,115,.15)}
+body.helper .side,body.helper .bar,body.helper #tip,body.helper #bMenu{display:none}
+body.helper .layout{grid-template-columns:1fr}
 .crb{margin-top:12px;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:8px;overflow-x:auto}
 .crb table{width:100%;border-collapse:collapse;text-align:center}
 .crb th{font-size:13px;color:var(--mut);font-weight:600;padding:6px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -241,6 +248,7 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
   <header>
     <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1f242b"/><circle cx="20" cy="20" r="14" fill="none" stroke="#2bb673" stroke-width="3"/><circle cx="20" cy="20" r="8" fill="none" stroke="#e5383b" stroke-width="3"/><circle cx="20" cy="20" r="3" fill="#e5383b"/></svg>
     <h1>Dart <span>Cam</span></h1>
+    <span class="lkb" id="lkBadge" hidden></span>
     <button class="ib" id="bMenu" aria-label="Hauptmenü" title="Hauptmenü"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></button>
     <button class="ib" id="bCal" aria-label="Kalibrieren" title="Kalibrieren"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
     <button class="ib" id="bSet" aria-label="Einstellungen" title="Einstellungen"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
@@ -280,6 +288,17 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
       <option value="0,1">Unterhalb der Scheibe</option><option value="0,-1">Oberhalb der Scheibe</option>
       <option value="-1,0">Links von der Scheibe</option><option value="1,0">Rechts von der Scheibe</option></select></label>
     <label>Empfindlichkeit<input id="iSens" type="range" min="12" max="60" value="28"></label>
+    <div class="lk" style="grid-column:1/-1">
+      <b>Zweites Handy (mehr Genauigkeit)</b>
+      <p class="note" style="margin:0">Zweites Handy seitlich bzw. schräg zur Scheibe aufstellen. Beide brauchen Internet für die Kopplung.</p>
+      <div class="row2" style="justify-content:flex-start">
+        <button type="button" id="lkMain">Dieses Handy = Hauptgerät</button>
+        <button type="button" id="lkHelp">Dieses Handy = Zweitkamera</button>
+        <button type="button" id="lkOff" hidden>Kopplung beenden</button>
+      </div>
+      <div class="row2" id="lkJoin" hidden style="justify-content:flex-start"><input id="lkCode" inputmode="numeric" maxlength="4" placeholder="Code" style="width:120px"><button type="button" class="ok" id="lkGo">Verbinden</button></div>
+      <p id="lkSt" class="lkst">Nur dieses Handy.</p>
+    </div>
     <label>Design<select id="iSkin"><option value="classic">Klassisch</option><option value="purple">Purple</option></select></label>
     <label>Ansage per Sprache<select id="iVoice"><option value="1">An</option><option value="0">Aus</option></select></label>
   </div>
@@ -479,7 +498,8 @@ function drawOverlay(){
   for(const[r,c]of[[170,'#1f9a4c'],[162,'#1f9a4c'],[107,'#d8312a'],[99,'#d8312a'],[15.9,'#e7d6ae'],[6.35,'#e7d6ae']]){ctx.strokeStyle=c;ctx.beginPath();
     for(let a=0;a<=64;a++){const t=a/64*2*Math.PI,[x,y]=apply(Hinv,r*Math.sin(t),-r*Math.cos(t));a?ctx.lineTo(x*w,y*h):ctx.moveTo(x*w,y*h)}ctx.stroke()}
   ctx.strokeStyle='rgba(231,214,174,.35)';for(let i=0;i<20;i++){const t=(i*18+9)*Math.PI/180,[x1,y1]=apply(Hinv,15.9*Math.sin(t),-15.9*Math.cos(t)),[x2,y2]=apply(Hinv,170*Math.sin(t),-170*Math.cos(t));ctx.beginPath();ctx.moveTo(x1*w,y1*h);ctx.lineTo(x2*w,y2*h);ctx.stroke()}
-  if(G)G.darts.forEach((d,i)=>{if(d.x==null)return;ctx.fillStyle=i===sel?'#e7d6ae':'#ffd400';ctx.beginPath();ctx.arc(d.x*w,d.y*h,7*devicePixelRatio,0,7);ctx.fill();ctx.font=`${14*devicePixelRatio}px Oswald`;ctx.fillText(d.l,d.x*w+10*devicePixelRatio,d.y*h-8*devicePixelRatio)})}
+  if(ROLE==='helper'&&lastHelp&&Date.now()-lastHelp.at<4000){ctx.fillStyle='#ffd400';ctx.beginPath();ctx.arc(lastHelp.x*w,lastHelp.y*h,8*devicePixelRatio,0,7);ctx.fill()}
+  if(G&&ROLE!=='helper')G.darts.forEach((d,i)=>{if(d.x==null)return;ctx.fillStyle=i===sel?'#e7d6ae':'#ffd400';ctx.beginPath();ctx.arc(d.x*w,d.y*h,7*devicePixelRatio,0,7);ctx.fill();ctx.font=`${14*devicePixelRatio}px Oswald`;ctx.fillText(d.l,d.x*w+10*devicePixelRatio,d.y*h-8*devicePixelRatio)})}
 
 /* ---------- Bilderkennung ---------- */
 const SW=240;let SH=135,work=document.createElement('canvas'),wctx=work.getContext('2d',{willReadFrequently:true});
@@ -499,6 +519,10 @@ function step(cur){
   if(motion>maskN*.01){stable=0;st.textContent='Bewegung … '+Math.round(motion/maskN*100)+'%';return}
   if(++stable<4)return;
   const changed=diffCount(cur,ref,th);
+  if(ROLE==='helper'){st.textContent=link.open?'Zweitkamera · verbunden':'Zweitkamera · nicht verbunden';
+    if(changed<6)return;if(changed>maskN*.12){ref=cur;return}
+    const t=findTip(cur,ref,th);ref=cur;if(!t)return;const[hx,hy]=apply(H,t[0],t[1]);
+    if(Math.hypot(hx,hy)<=200)link.send({t:'dart',mx:hx,my:hy});lastHelp={x:t[0],y:t[1],mx:hx,my:hy,at:Date.now()};drawOverlay();return}
   if(G.done||G.over){
     st.textContent='Darts ziehen …';
     if(diffCount(cur,empty,th)<maskN*.004){if(++clearWait>2){clearWait=0;ref=cur;empty=cur;nextTurn()}}else clearWait=0;
@@ -508,7 +532,7 @@ function step(cur){
   if(changed>maskN*.12){ /* großer Unterschied: Darts gezogen oder Licht geändert */
     if(G.darts.length&&diffCount(cur,empty,th)<maskN*.004){ref=cur;empty=cur;nextTurn()}else{ref=cur}return}
   const tip=findTip(cur,ref,th);ref=cur;if(!tip)return;
-  const[mx,my]=apply(H,tip[0],tip[1]);addDart({...scoreAt(mx,my),x:tip[0],y:tip[1],mx,my})}
+  const[mx,my]=apply(H,tip[0],tip[1]);detected('me',mx,my,tip[0],tip[1])}
 function findTip(cur,old,th){
   const[dx,dy]=$('iDir').value.split(',').map(Number);const on=new Uint8Array(cur.length);
   for(let i=0;i<cur.length;i++)if(mask[i]&&Math.abs(cur[i]-old[i])>th)on[i]=1;
@@ -561,6 +585,43 @@ $('bMenu').onclick=showMenu;
 $('bWinMenu').onclick=()=>{$('win').classList.remove('on');showMenu()};
 function skin(v){document.documentElement.dataset.skin=v;document.querySelector('meta[name=theme-color]').content=v==='purple'?'#0f0819':'#0d0f12';store.set('dc_skin',v)}
 $('iSkin').value=store.get('dc_skin')||'classic';skin($('iSkin').value);$('iSkin').addEventListener('change',e=>skin(e.target.value));
+/* ---------- Zweites Handy (Kopplung) ---------- */
+let ROLE='solo',lastHelp=null;
+const link={peer:null,conn:null,open:false,code:'',
+  send(m){try{if(this.conn&&this.open)this.conn.send(m)}catch(e){}}};
+function loadPeer(){return new Promise((ok,no)=>{if(window.Peer)return ok();const sc=document.createElement('script');sc.src='peerjs.min.js';sc.onload=ok;sc.onerror=()=>no(new Error('Kopplungs-Modul nicht geladen'));document.head.appendChild(sc)})}
+function linkStatus(t){$('lkSt').textContent=t;updRoleUI()}
+function updRoleUI(){document.body.classList.toggle('helper',ROLE==='helper');$('lkMain').hidden=ROLE!=='solo';$('lkHelp').hidden=ROLE!=='solo';$('lkJoin').hidden=ROLE!=='solo';$('lkOff').hidden=ROLE==='solo';
+  const b=$('lkBadge');b.hidden=ROLE==='solo';b.textContent=ROLE==='main'?(link.open?'2 Kameras':'Warte auf 2. Handy'):'Zweitkamera';b.classList.toggle('on',link.open)}
+function wire(c){link.conn=c;c.on('open',()=>{link.open=true;linkStatus(ROLE==='main'?'Verbunden – zweites Handy liefert Treffer.':'Verbunden mit Hauptgerät '+link.code+'. Jetzt hier kalibrieren.');say('Zweites Handy verbunden')});
+  c.on('data',m=>{if(ROLE==='main'&&m&&m.t==='dart'&&isFinite(m.mx)&&isFinite(m.my))detected('help',+m.mx,+m.my)});
+  c.on('close',()=>{link.open=false;linkStatus('Verbindung getrennt.')});c.on('error',()=>{link.open=false;linkStatus('Verbindungsfehler.')})}
+async function startMain(){try{await loadPeer()}catch(e){linkStatus(e.message+' – Internet nötig.');return}
+  ROLE='main';link.code=String(Math.floor(1000+Math.random()*9000));linkStatus('Starte …');
+  const pr=new Peer('dartcam-'+link.code+'-x7');link.peer=pr;
+  pr.on('open',()=>linkStatus('Code: '+link.code+' – gib ihn am zweiten Handy ein.'));
+  pr.on('connection',c=>{if(link.conn)try{link.conn.close()}catch(e){}wire(c)});
+  pr.on('error',e=>{if(e.type==='unavailable-id'){pr.destroy();startMain()}else linkStatus('Fehler: '+e.type)})}
+async function startHelper(){const code=$('lkCode').value.replace(/\D/g,'');if(code.length!==4){linkStatus('Bitte den 4-stelligen Code vom Hauptgerät eingeben.');return}
+  try{await loadPeer()}catch(e){linkStatus(e.message+' – Internet nötig.');return}
+  ROLE='helper';link.code=code;linkStatus('Verbinde …');const pr=new Peer();link.peer=pr;
+  pr.on('open',()=>wire(pr.connect('dartcam-'+code+'-x7',{reliable:true})));
+  pr.on('error',e=>linkStatus(e.type==='peer-unavailable'?'Hauptgerät mit Code '+code+' nicht gefunden.':'Fehler: '+e.type))}
+function stopLink(){try{link.peer&&link.peer.destroy()}catch(e){}link.peer=null;link.conn=null;link.open=false;ROLE='solo';pend=[];linkStatus('Nur dieses Handy.');render()}
+/* Treffer beider Kameras zusammenführen */
+let pend=[];const FUSE_MS=1100;
+function detected(src,mx,my,x,y){
+  if(ROLE!=='main'||!link.open){if(src==='me')commit(mx,my,x,y);return}
+  if(G.done||G.over)return;
+  const now=Date.now(),other=pend.find(q=>q.src!==src&&now-q.at<FUSE_MS);
+  if(other){clearTimeout(other.tm);pend=pend.filter(q=>q!==other);
+    const a=src==='me'?{mx,my}:other,b=src==='me'?other:{mx,my};
+    const fx=(a.mx+b.mx)/2,fy=(a.my+b.my)/2;commit(fx,fy,null,null,Math.hypot(a.mx-b.mx,a.my-b.my));return}
+  const q={src,mx,my,x,y,at:now};q.tm=setTimeout(()=>{pend=pend.filter(z=>z!==q);commit(q.mx,q.my,q.x,q.y)},FUSE_MS);pend.push(q)}
+function commit(mx,my,x,y,spread){if(G.done||G.over)return;
+  if(x==null&&Hinv){[x,y]=apply(Hinv,mx,my)}
+  addDart({...scoreAt(mx,my),x,y,mx,my});if(spread>25)hint.textContent='Kameras uneinig ('+Math.round(spread)+' mm) – Treffer ggf. antippen und korrigieren.'}
+$('lkMain').onclick=startMain;$('lkHelp').onclick=()=>{$('lkJoin').hidden=false;$('lkCode').focus()};$('lkGo').onclick=startHelper;$('lkOff').onclick=stopLink;
 $('bStart').onclick=startCam;
 $('bCal').onclick=()=>{if(!running){hint.textContent='Erst die Kamera starten.';return}startCal()};
 $('bSet').onclick=()=>{$('settings').hidden=false};
@@ -572,7 +633,7 @@ $('bUndo').onclick=()=>{if(G.over)return;G.darts.pop();sel=-1;replay();resetRefs
 $('bWin').onclick=()=>{$('win').classList.remove('on');newGame();resetRefs()};
 new ResizeObserver(drawOverlay).observe(ov);
 $('bwrap').innerHTML=boardSVG();
-window.dc={addDart,nextTurn,get G(){return G}};
+window.dc={addDart,nextTurn,detected,link,setRole:r=>{ROLE=r},get G(){return G}};
 newGame();showMenu();
 }
 </script>

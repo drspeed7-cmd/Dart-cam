@@ -26,7 +26,7 @@ jobs:
       - name: Web-App in die App kopieren
         run: |
           mkdir -p android/app/src/main/assets
-          cp index.html android/app/src/main/assets/index.html
+          cp index.html peerjs.min.js android/app/src/main/assets/
 
       - name: APK bauen
         working-directory: android
