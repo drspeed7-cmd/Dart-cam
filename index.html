@@ -353,7 +353,16 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
       <p id="lkSt" class="lkst">Nur dieses Handy.</p>
     </div>
     <label>Design<select id="iSkin"><option value="classic">Klassisch</option><option value="purple">Purple</option></select></label>
-    <label>Ansage per Sprache<select id="iVoice"><option value="1">An</option><option value="0">Aus</option></select></label>
+    <div class="lk" style="grid-column:1/-1">
+      <b>Sprachansage</b>
+      <label>Ansage-Stil<select id="iVoice"><option value="caller">Caller: Aufnahme-Summe &amp; Rest</option><option value="all">Jeden Dart ansagen</option><option value="0">Aus</option></select></label>
+      <label>Stimme<select id="vSel"><option value="">Standard</option></select></label>
+      <div class="g2">
+        <label>Tempo<input id="vRate" type="range" min="0.6" max="1.6" step="0.05" value="1.05"></label>
+        <label>Tonhöhe<input id="vPitch" type="range" min="0.5" max="1.6" step="0.05" value="0.9"></label>
+      </div>
+      <button type="button" id="vTest">Hörprobe abspielen</button>
+    </div>
   </div>
   <button class="ok" id="bNew">Zum Hauptmenü</button>
   <p class="note" style="margin:0">Tipp: ca. 60–100 cm vor der Scheibe, leicht unter- oder oberhalb, gleichmäßiges Licht.</p>
@@ -419,19 +428,19 @@ function replay(){G.pl.forEach((p,i)=>p.st=clone(G.snap[i]));const p=G.pl[G.cur]
   for(const d of G.darts){d.bust=false;res=M.dart(p,d);if(res==='bust'){d.bust=true;G.bust=true;G.done=true;G.pl.forEach((q,i)=>q.st=clone(G.snap[i]));break}if(res==='win')break}
   if(G.darts.length>=3&&!G.bust&&res!=='win'){G.done=true;if(M.end)G.note=M.end(p)||''}
   render();if(res==='win')finish(p)}
-function addDart(d){if(G.done||G.over)return;G.darts.push(d);flash(d);say(d.l==='Daneben'?'Daneben':d.l.replace('T','Triple ').replace('D','Double '));replay();
+function addDart(d){if(G.done||G.over)return;G.darts.push(d);flash(d);say(d.l==='Daneben'?'Daneben':d.l.replace('T','Triple ').replace('D','Double '),'dart');replay();
   const aw=!G.bust&&G.darts.length===3?award(G.darts):'';if(aw){showAward(aw);return}
-  if(G.bust)say('Überworfen');else if(G.note)say(G.note);else if(G.done&&!G.over&&(G.mode==='x01'||G.mode==='countup'))say(G.darts.reduce((a,d)=>a+d.v,0)+' Punkte')}
+  if(G.bust)say('Überworfen!');else if(G.note)say(G.note);else if(G.done&&!G.over&&(G.mode==='x01'||G.mode==='countup')){const t=G.darts.reduce((a,d)=>a+d.v,0);say(t===0?'Keine Punkte':String(t))}}
 function nextTurn(){if(G.over)return;lastN=0;const p=G.pl[G.cur];
   if(!G.done&&M.end){G.note=M.end(p)||''}
   p.h=p.h||[];p.h.push(G.mode==='halfit'?(p.st.hit?'hit':'half'):G.bust?0:G.darts.reduce((a,d)=>a+d.v,0));
   G.cur=(G.cur+1)%G.pl.length;if(G.cur===0)G.round++;
   if(M.rounds&&G.round>M.rounds){G.round=M.rounds;const r=[...G.pl].sort(M.rank);if(r.length>1&&M.rank(r[0],r[1])===0){G.over=true;G.done=true;$('winName').textContent='Unentschieden';$('winSub').textContent=M.name()+' · '+M.main(r[0])+' Punkte';$('winTab').innerHTML=standingsHTML(false);$('win').classList.add('on');say('Unentschieden');render();return}finish(r[0]);return}
   if(M.begin)M.begin(G.pl[G.cur]);G.snap=clone(G.pl.map(q=>q.st));G.darts=[];G.done=false;G.bust=false;G.note='';sel=-1;render();
-  const q=G.pl[G.cur];say(q.n+(G.mode==='x01'?', noch '+q.st.s:M.sub(q).startsWith('Ziel')?', '+M.sub(q).split('·')[0]:''))}
+  const q=G.pl[G.cur];say(q.n+(G.mode==='x01'?(q.st.s<=170&&checkout(q.st.s,3)?', du brauchst '+q.st.s:', '+q.st.s+' Rest'):M.sub(q).startsWith('Ziel')?', '+M.sub(q).split('·')[0]:''))}
 function finish(p){G.over=true;G.done=true;$('winName').textContent=p.n;addWin(p.n);$('winTab').innerHTML=standingsHTML(false);
   $('winSub').textContent=M.name()+' · '+(G.mode==='x01'?'Leg gewonnen':G.mode==='atc'?'als Erster rum':M.main(p)+' Punkte');
-  $('win').classList.add('on');say(p.n+' gewinnt!')}
+  $('win').classList.add('on');say((G.mode==='x01'?'Game Shot! ':'')+p.n+' gewinnt!')}
 
 /* ---------- Spielstand & Gesamtwertung ---------- */
 function extra(q){const h=(q.h||[]).filter(x=>typeof x==='number');
@@ -519,7 +528,15 @@ $('hero').addEventListener('click',e=>{const b=e.target.closest('.slot.f');if(!b
   if(sel>=0)hint.textContent='Tippe im Kamerabild auf die richtige Stelle dieses Darts.';else hint.textContent=''});
 
 /* ---------- Sprache ---------- */
-function say(t){if($('iVoice').value!=='1')return;if(window.DartCamApp){try{DartCamApp.speak(t)}catch(e){}return}if(!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';speechSynthesis.speak(u)}catch(e){}}
+function voices(){if(window.DartCamApp&&DartCamApp.getVoices){try{return JSON.parse(DartCamApp.getVoices())}catch(e){return[]}}
+  try{return speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang)).map(v=>v.name)}catch(e){return[]}}
+function fillVoices(){const sel=$('vSel'),cur=store.get('dc_voice')||{},list=voices();if(!list.length)return;
+  sel.innerHTML='<option value="">Standard</option>'+list.map(n=>`<option></option>`).join('');[...sel.options].slice(1).forEach((o,i)=>{o.value=list[i];o.textContent=list[i].replace(/^de-de-x-|-(local|network)$/gi,'')+(/network/i.test(list[i])?' (online)':'')});
+  if(cur.n&&list.includes(cur.n))sel.value=cur.n}
+function speak(t){const r=+$('vRate').value,pi=+$('vPitch').value,n=$('vSel').value;
+  if(window.DartCamApp){try{DartCamApp.speak2?DartCamApp.speak2(t,r,pi,n):DartCamApp.speak(t)}catch(e){}return}
+  if(!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';u.rate=r;u.pitch=pi;const v=speechSynthesis.getVoices().find(x=>x.name===n);if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}}
+function say(t,kind){const m=$('iVoice').value;if(m==='0')return;if(kind==='dart'&&m!=='all')return;speak(t)}
 
 /* ---------- Kamera & Kalibrierung ---------- */
 let H=store.get('dc_H'),Hinv=store.get('dc_Hinv'),cal=null,running=false;
@@ -598,7 +615,7 @@ function findTip(cur,old,th){
 
 /* ---------- Buttons & Einstellungen ---------- */
 function saveSettings(){store.set('dc_set',{mo:$('iMode').value,cr:$('iCr').value,pl:$('iPl').value,st:$('iStart').value,o:$('iOut').value,d:$('iDir').value,s:$('iSens').value,v:$('iVoice').value})}
-const S=store.get('dc_set');if(S){if(S.mo)$('iMode').value=S.mo;if(S.cr)$('iCr').value=S.cr;$('iPl').value=S.pl;$('iStart').value=S.st;$('iOut').value=S.o;$('iDir').value=S.d;$('iSens').value=S.s;$('iVoice').value=S.v}
+const S=store.get('dc_set');if(S){if(S.mo)$('iMode').value=S.mo;if(S.cr)$('iCr').value=S.cr;$('iPl').value=S.pl;$('iStart').value=S.st;$('iOut').value=S.o;$('iDir').value=S.d;$('iSens').value=S.s;$('iVoice').value=S.v==='1'?'caller':S.v;if(!$('iVoice').value)$('iVoice').value='caller'}
 ['iDir','iSens','iVoice'].forEach(id=>$(id).addEventListener('change',saveSettings));
 const INFO={x01:'Von der Startzahl runter auf genau 0. Bei Double Out muss der letzte Dart ein Double oder Bull sein.',cricket:'20 bis 15 und Bull je 3-mal treffen, um sie zu schließen. Danach gibt es Punkte, solange der Gegner offen ist. Cut-Throat: Punkte gehen an die Gegner, wenig ist gut. Max. 20 Runden.',countup:'8 Runden, alle Punkte zählen. Höchste Summe gewinnt.',atc:'1 bis 20 der Reihe nach treffen, zum Schluss Bull. Wer zuerst durch ist, gewinnt.',halfit:'Start mit 40. Jede Runde ein Ziel (15, 16, Double, 17, 18, Triple, 19, 20, Bull). Kein Treffer in der Runde = Punkte halbiert.',shanghai:'7 Runden, Ziel ist die Rundenzahl. Single, Double und Triple der Zahl in einer Runde = sofortiger Sieg.'};
 /* ---------- Hauptmenü ---------- */
@@ -678,6 +695,11 @@ $('lkMain').onclick=startMain;$('lkHelp').onclick=()=>{$('lkJoin').hidden=false;
 function setTab(t){document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.p===t))}
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.t)});
 window.setTabAuto=m=>setTab(m==='cricket'?'table':'board');
+{const v=store.get('dc_voice')||{};if(v.r)$('vRate').value=v.r;if(v.p)$('vPitch').value=v.p;
+  const sv=()=>store.set('dc_voice',{n:$('vSel').value,r:$('vRate').value,p:$('vPitch').value});
+  ['vSel','vRate','vPitch'].forEach(id=>$(id).addEventListener('change',sv));
+  fillVoices();try{speechSynthesis.onvoiceschanged=fillVoices}catch(e){}setTimeout(fillVoices,1500);
+  $('vTest').onclick=()=>{try{speechSynthesis.cancel()}catch(e){}speak('Hundertachtzig! Mario, du brauchst 32.')}}
 $('bStart').onclick=startCam;
 $('bCal').onclick=()=>{if(!running){hint.textContent='Erst die Kamera starten.';return}startCal()};
 $('bSet').onclick=()=>{$('settings').hidden=false};

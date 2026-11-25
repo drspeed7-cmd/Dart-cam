@@ -7,6 +7,8 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
+import org.json.JSONArray;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
@@ -123,6 +125,34 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void speak(String text) {
             if (tts != null) tts.speak(text, TextToSpeech.QUEUE_ADD, null, null);
+        }
+
+        @JavascriptInterface
+        public void speak2(String text, float rate, float pitch, String voiceName) {
+            if (tts == null) return;
+            tts.setSpeechRate(rate);
+            tts.setPitch(pitch);
+            if (voiceName != null && !voiceName.isEmpty()) {
+                try {
+                    for (Voice v : tts.getVoices()) {
+                        if (v.getName().equals(voiceName)) { tts.setVoice(v); break; }
+                    }
+                } catch (Exception ignored) { }
+            } else {
+                tts.setLanguage(Locale.GERMAN);
+            }
+            tts.speak(text, TextToSpeech.QUEUE_ADD, null, null);
+        }
+
+        @JavascriptInterface
+        public String getVoices() {
+            JSONArray arr = new JSONArray();
+            try {
+                for (Voice v : tts.getVoices()) {
+                    if ("de".equals(v.getLocale().getLanguage())) arr.put(v.getName());
+                }
+            } catch (Exception ignored) { }
+            return arr.toString();
         }
     }
 }
