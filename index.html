@@ -144,6 +144,7 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
 <div class="win" id="win"><div><div class="num" id="winName"></div><p>gewinnt das Leg</p><button class="ok" id="bWin">Neues Leg</button></div></div>
 
 <script>
+window.addEventListener('error',e=>{const h=document.getElementById('hint');if(h)h.textContent='Fehler: '+e.message});
 {
 const $=id=>document.getElementById(id);
 const vid=$('vid'),ov=$('ov'),ctx=ov.getContext('2d'),hint=$('hint'),st=$('st');
@@ -205,14 +206,20 @@ function say(t){if($('iVoice').value!=='1'||!window.speechSynthesis)return;try{c
 /* ---------- Kamera & Kalibrierung ---------- */
 let H=store.get('dc_H'),Hinv=store.get('dc_Hinv'),cal=null,running=false;
 async function startCam(){
-  if(!navigator.mediaDevices?.getUserMedia){hint.textContent='Dieser Browser erlaubt keinen Kamerazugriff. Öffne die Seite über https:// in Chrome oder Safari.';return}
-  try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});vid.srcObject=s;await vid.play()}
-  catch(e){hint.textContent='Kamera nicht verfügbar: '+e.message;return}
+  st.textContent='Kamera wird gestartet …';hint.textContent='Kamera wird gestartet … Bitte den Kamerazugriff erlauben, falls gefragt.';
+  if(/FBAN|FBAV|Instagram|WhatsApp|Line\/|GSA\/|wv\)/.test(navigator.userAgent)){hint.textContent='Du bist im eingebauten Browser einer App. Kopiere den Link und öffne ihn direkt in Chrome oder Safari.'}
+  if(!window.isSecureContext||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){hint.textContent='Dieser Browser erlaubt hier keinen Kamerazugriff. Öffne den Link direkt in Chrome (Android) oder Safari (iPhone).';st.textContent='Keine Kamera';return}
+  const slow=setTimeout(()=>{hint.textContent='Die Kamera antwortet nicht. Prüfe, ob der Browser Kamerazugriff hat (Handy-Einstellungen → Apps → Chrome/Safari → Kamera) und lade die Seite neu.'},8000);
+  try{let s;try{s=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false})}
+    catch(e){if(e.name==='NotAllowedError'||e.name==='SecurityError')throw e;s=await navigator.mediaDevices.getUserMedia({video:true,audio:false})}
+    vid.srcObject=s;try{await vid.play()}catch(e){}}
+  catch(e){clearTimeout(slow);st.textContent='Keine Kamera';hint.textContent=(e.name==='NotAllowedError'?'Kamerazugriff wurde abgelehnt. Tippe auf das Schloss/„aA“ neben der Adresse, erlaube die Kamera und lade neu.':'Kamera nicht verfügbar: '+e.name+' '+e.message);return}
+  clearTimeout(slow);hint.textContent='';
   try{await navigator.wakeLock?.request('screen')}catch(e){}
   $('empty').hidden=true;$('cam').classList.add('live');running=true;
   if(!H)startCal();else{hint.textContent='';resetRefs();st.textContent='Bereit – wirf!'}
   loop()}
-function startCal(){cal=[];hint.textContent='Kalibrierung 1/4: Tippe '+CAL_NAMES[0]+'.';drawOverlay()}
+function startCal(){cal=[];st.textContent='Kalibrierung';hint.textContent='Kalibrierung 1/4: Tippe '+CAL_NAMES[0]+'.';drawOverlay()}
 ov.addEventListener('pointerdown',e=>{const r=ov.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
   if(cal){cal.push([x,y]);if(cal.length<4){hint.textContent=`Kalibrierung ${cal.length+1}/4: Tippe ${CAL_NAMES[cal.length]}.`;drawOverlay();return}
     H=homog(cal,CAL_MM);Hinv=homog(CAL_MM,cal);store.set('dc_H',H);store.set('dc_Hinv',Hinv);cal=null;mask=null;resetRefs();st.textContent='Bereit – wirf!';drawOverlay();
