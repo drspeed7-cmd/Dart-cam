@@ -24,6 +24,7 @@ main{max-width:900px;margin:0 auto;padding:12px max(3vw,12px) 40px}
 .cam canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 .hint{position:absolute;left:8px;right:8px;top:8px;background:rgba(17,18,17,.82);padding:8px 12px;border-radius:10px;font-size:15px}
 .hint:empty{display:none}
+.hint,.status{pointer-events:none}
 .status{position:absolute;right:8px;bottom:8px;background:rgba(17,18,17,.8);padding:4px 10px;border-radius:99px;font-size:13px}
 button,select,input{font:inherit;font-size:16px;color:var(--ink);background:#2a2b28;border:1px solid #3a3b37;border-radius:10px;min-height:44px;padding:0 14px}
 button{cursor:pointer;font-weight:600}
@@ -165,7 +166,8 @@ async function startCam(){
 function startCal(){cal=[];hint.textContent='Kalibrierung 1/4: Tippe '+CAL_NAMES[0]+'.';drawOverlay()}
 ov.addEventListener('pointerdown',e=>{const r=ov.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
   if(cal){cal.push([x,y]);if(cal.length<4){hint.textContent=`Kalibrierung ${cal.length+1}/4: Tippe ${CAL_NAMES[cal.length]}.`;drawOverlay();return}
-    H=homog(cal,CAL_MM);Hinv=homog(CAL_MM,cal);store.set('dc_H',H);store.set('dc_Hinv',Hinv);cal=null;mask=null;hint.textContent='';resetRefs();st.textContent='Bereit – wirf!';drawOverlay();return}
+    H=homog(cal,CAL_MM);Hinv=homog(CAL_MM,cal);store.set('dc_H',H);store.set('dc_Hinv',Hinv);cal=null;mask=null;resetRefs();st.textContent='Bereit – wirf!';drawOverlay();
+    hint.textContent='Kalibrierung fertig ✓ Liegen die Ringe auf der Scheibe? Dann einfach werfen. Sonst nochmal „Kalibrieren“.';say('Kalibrierung fertig');setTimeout(()=>{if(!cal&&sel<0)hint.textContent=''},6000);return}
   if(sel>=0&&H){const[mx,my]=apply(H,x,y);const s=scoreAt(mx,my);Object.assign(G.darts[sel],s,{x,y});sel=-1;hint.textContent='';replay()}});
 
 function drawOverlay(){
@@ -192,14 +194,14 @@ function step(cur){
   const th=+$('iSens').value;
   if(!ref){ref=cur;empty=cur;prev=cur;return}
   const motion=diffCount(cur,prev,th);prev=cur;
-  if(motion>maskN*.003){stable=0;st.textContent='Bewegung …';return}
+  if(motion>maskN*.01){stable=0;st.textContent='Bewegung … '+Math.round(motion/maskN*100)+'%';return}
   if(++stable<4)return;
   const changed=diffCount(cur,ref,th);
   if(G.done||G.pl[G.cur].s===0){
     st.textContent='Darts ziehen …';
     if(diffCount(cur,empty,th)<maskN*.004){if(++clearWait>2){clearWait=0;ref=cur;empty=cur;nextTurn()}}else clearWait=0;
     if(changed>0)ref=cur;return}
-  st.textContent='Bereit – wirf!';
+  st.textContent='Bereit – wirf! ('+G.pl[G.cur].n+')';
   if(changed<6)return;
   if(changed>maskN*.12){ /* großer Unterschied: Darts gezogen oder Licht geändert */
     if(G.darts.length&&diffCount(cur,empty,th)<maskN*.004){ref=cur;empty=cur;nextTurn()}else{ref=cur}return}
