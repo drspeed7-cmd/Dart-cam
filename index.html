@@ -211,6 +211,56 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
 [data-skin=purple] .card:nth-child(5){--c1:#6d28d9;--c2:#1f0b45}
 [data-skin=purple] .card:nth-child(6){--c1:#a21caf;--c2:#3a0640}
 [data-skin=purple] .card,[data-skin=purple] .msel{background:linear-gradient(160deg,var(--c1),var(--c2))!important}
+
+/* ---------- Handy-Optimierung: alles auf einen Bildschirm ---------- */
+.tabs{display:none}
+@media(max-width:859px){
+  html,body{height:100%}
+  body:not(.helper) main{height:100dvh;display:flex;flex-direction:column;padding-bottom:calc(76px + env(safe-area-inset-bottom));padding-top:calc(6px + env(safe-area-inset-top))}
+  header{margin-bottom:8px;gap:8px}
+  header h1{font-size:22px}
+  .logo{width:28px;height:28px}
+  .ib{width:40px;height:40px;border-radius:12px}
+  .ib svg{width:20px;height:20px}
+  body:not(.helper) .layout{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .cam{border-radius:16px;min-height:0;aspect-ratio:auto;height:22dvh;margin:0 auto;width:100%}
+  .cam.live{height:auto;width:fit-content;max-width:100%}
+  .cam.live video{max-height:26dvh;width:auto;max-width:100%}
+  .pill{left:8px;top:8px;padding:4px 10px;font-size:12px}
+  .hint{left:8px;right:8px;bottom:8px;padding:8px 12px;font-size:14px}
+  #tip{display:none}
+  body:not(.helper) .side{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .hero{padding:12px 14px;border-radius:16px;flex:none}
+  .hero .who b{font-size:16px}
+  .tag{font-size:11px;padding:2px 8px}
+  .score{font-size:clamp(56px,17vw,84px);margin:2px 0}
+  .co{min-height:0}.co span{font-size:13px;padding:3px 10px}
+  .slots{margin-top:8px;gap:6px}
+  .slot{min-height:52px;border-radius:12px}
+  .slot.f b{font-size:22px}
+  .sum{margin-top:6px}
+  .sum b{font-size:18px}
+  .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--s1);border:1px solid var(--line);border-radius:14px;flex:none}
+  .tabs button{min-height:38px;border:0;background:transparent;color:var(--mut);font-size:14px;border-radius:10px;padding:0}
+  .tabs button.on{background:var(--s2);color:var(--ink)}
+  .panes{flex:1;min-height:0;position:relative}
+  .pane{display:none;position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch}
+  .pane.on{display:block}
+  .pane[data-p=board] .bcard{height:100%;margin:0;padding:0;position:relative;display:block}
+  .pane[data-p=board] .bwrap{position:absolute;inset:8px;width:auto;height:auto;aspect-ratio:auto;margin:0}
+  .pane .bcard,.pane .others,.pane .crb{margin-top:0}
+  .bar{padding-top:8px}
+  .bar button{min-height:50px}
+}
+@media(max-width:859px) and (orientation:landscape){
+  body:not(.helper) .layout{flex-direction:row}
+  body:not(.helper) .layout>div:first-child{flex:1;min-width:0;display:flex;align-items:center;justify-content:center}
+  .cam,.cam.live{height:auto}
+  .cam.live video{max-height:calc(100dvh - 150px)}
+  body:not(.helper) .side{flex:1}
+  .score{font-size:56px}
+}
+@media(min-width:860px){.pane{display:block}.pane+.pane{margin-top:12px}}
 </style>
 </head>
 <body>
@@ -267,9 +317,12 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
     </div>
     <div class="side">
       <section class="hero" id="hero"></section>
-      <section class="bcard"><div class="bwrap" id="bwrap"></div><div id="viz"></div></section>
-      <div class="others" id="players"></div>
-      <div class="crb" id="crb" hidden></div>
+      <nav class="tabs" id="tabs"><button data-t="board" class="on">Board</button><button data-t="table">Spielstand</button><button data-t="stats">Statistik</button></nav>
+      <div class="panes">
+        <div class="pane on" data-p="board"><section class="bcard"><div class="bwrap" id="bwrap"></div></section></div>
+        <div class="pane" data-p="table"><div class="others" id="players"></div><div class="crb" id="crb" hidden></div></div>
+        <div class="pane" data-p="stats"><section class="bcard"><div id="viz"></div></section></div>
+      </div>
     </div>
   </div>
 </main>
@@ -361,7 +414,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 function newGame(){const names=$('iPl').value.split(',').map(s=>s.trim()).filter(Boolean);
   G={mode:$('iMode').value,start:+$('iStart').value,dOut:$('iOut').value==='d',cut:$('iCr').value==='cut',round:1,cur:0,darts:[],done:false,bust:false,over:false,note:''};
   M=MODES[G.mode];G.pl=(names.length?names:['Spieler 1']).map(n=>({n,h:[]}));G.pl.forEach(p=>p.st=M.init());G.snap=clone(G.pl.map(p=>p.st));
-  saveSettings();render();say(M.name())}
+  saveSettings();render();say(M.name());if(window.setTabAuto)setTabAuto(G.mode)}
 function replay(){G.pl.forEach((p,i)=>p.st=clone(G.snap[i]));const p=G.pl[G.cur];G.bust=false;G.done=false;G.note='';let res;
   for(const d of G.darts){d.bust=false;res=M.dart(p,d);if(res==='bust'){d.bust=true;G.bust=true;G.done=true;G.pl.forEach((q,i)=>q.st=clone(G.snap[i]));break}if(res==='win')break}
   if(G.darts.length>=3&&!G.bust&&res!=='win'){G.done=true;if(M.end)G.note=M.end(p)||''}
@@ -622,6 +675,9 @@ function commit(mx,my,x,y,spread){if(G.done||G.over)return;
   if(x==null&&Hinv){[x,y]=apply(Hinv,mx,my)}
   addDart({...scoreAt(mx,my),x,y,mx,my});if(spread>25)hint.textContent='Kameras uneinig ('+Math.round(spread)+' mm) – Treffer ggf. antippen und korrigieren.'}
 $('lkMain').onclick=startMain;$('lkHelp').onclick=()=>{$('lkJoin').hidden=false;$('lkCode').focus()};$('lkGo').onclick=startHelper;$('lkOff').onclick=stopLink;
+function setTab(t){document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.p===t))}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.t)});
+window.setTabAuto=m=>setTab(m==='cricket'?'table':'board');
 $('bStart').onclick=startCam;
 $('bCal').onclick=()=>{if(!running){hint.textContent='Erst die Kamera starten.';return}startCal()};
 $('bSet').onclick=()=>{$('settings').hidden=false};
