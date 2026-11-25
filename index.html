@@ -130,6 +130,18 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .plist button{width:48px;padding:0}
 .wide{width:100%;min-height:58px;font-size:18px}
 .row2{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.tab{background:var(--s1);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.th{padding:10px 14px;font-size:13px;color:var(--mut);font-weight:600;border-bottom:1px solid var(--line)}
+.tr{display:grid;grid-template-columns:34px minmax(0,1fr) auto 70px;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.tr:first-of-type{border-top:0}
+.th+.tr{border-top:0}
+.tr.on{background:rgba(43,182,115,.12);box-shadow:inset 3px 0 0 var(--grn)}
+.tr .pos{font-size:22px;font-weight:700;color:var(--mut)}
+.tr .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.tr .n em{font-style:normal;font-size:12px;color:var(--ivory);font-weight:500;margin-left:4px}
+.tr .x{font-size:13px;color:var(--mut);white-space:nowrap}
+.tr .v{font-size:28px;font-weight:700;text-align:right}
+.wt{max-width:420px;margin:0 auto 18px;text-align:left}
 .crb{margin-top:12px;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:8px;overflow-x:auto}
 .crb table{width:100%;border-collapse:collapse;text-align:center}
 .crb th{font-size:13px;color:var(--mut);font-weight:600;padding:6px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -153,7 +165,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
 .win{position:fixed;inset:0;background:rgba(5,6,8,.88);backdrop-filter:blur(8px);display:none;place-items:center;text-align:center;z-index:7;padding:20px}
 .win.on{display:grid}
-.win .num{font-size:clamp(52px,14vw,96px);font-weight:800;color:var(--ivory);line-height:1}
+#winName{font-size:clamp(52px,14vw,96px);font-weight:800;color:var(--ivory);line-height:1}
 .win p{color:var(--mut);margin:8px 0 22px}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(43,182,115,.6)}70%{box-shadow:0 0 0 8px rgba(43,182,115,0)}100%{box-shadow:0 0 0 0 rgba(43,182,115,0)}}
 @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}
@@ -177,6 +189,8 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
   </div>
   <div id="mStep1">
     <div class="cards" id="cards"></div>
+    <h3>Gesamtwertung</h3>
+    <div id="mWins"></div>
     <button class="ghost" id="mCam">Kamera &amp; Ton einstellen</button>
   </div>
   <div id="mStep2" hidden>
@@ -240,7 +254,7 @@ input[type=range]{padding:0;accent-color:var(--red);background:none;border:0}
 </div></section>
 
 <div class="award" id="award"><b></b></div>
-<div class="win" id="win"><div><div class="num" id="winName"></div><p id="winSub">gewinnt</p><div class="row2"><button id="bWinMenu">Hauptmenü</button><button class="ok" id="bWin">Nochmal spielen</button></div></div></div>
+<div class="win" id="win"><div><div class="num" id="winName"></div><p id="winSub">gewinnt</p><div id="winTab" class="wt"></div><div class="row2"><button id="bWinMenu">Hauptmenü</button><button class="ok" id="bWin">Nochmal spielen</button></div></div></div>
 
 <script>
 window.addEventListener('error',e=>{const h=document.getElementById('hint');if(h)h.textContent='Fehler: '+e.message});
@@ -306,13 +320,27 @@ function nextTurn(){if(G.over)return;lastN=0;const p=G.pl[G.cur];
   if(!G.done&&M.end){G.note=M.end(p)||''}
   p.h=p.h||[];p.h.push(G.mode==='halfit'?(p.st.hit?'hit':'half'):G.bust?0:G.darts.reduce((a,d)=>a+d.v,0));
   G.cur=(G.cur+1)%G.pl.length;if(G.cur===0)G.round++;
-  if(M.rounds&&G.round>M.rounds){G.round=M.rounds;const r=[...G.pl].sort(M.rank);if(r.length>1&&M.rank(r[0],r[1])===0){G.over=true;G.done=true;$('winName').textContent='Unentschieden';$('winSub').textContent=M.name()+' · '+M.main(r[0])+' Punkte';$('win').classList.add('on');say('Unentschieden');render();return}finish(r[0]);return}
+  if(M.rounds&&G.round>M.rounds){G.round=M.rounds;const r=[...G.pl].sort(M.rank);if(r.length>1&&M.rank(r[0],r[1])===0){G.over=true;G.done=true;$('winName').textContent='Unentschieden';$('winSub').textContent=M.name()+' · '+M.main(r[0])+' Punkte';$('winTab').innerHTML=standingsHTML(false);$('win').classList.add('on');say('Unentschieden');render();return}finish(r[0]);return}
   if(M.begin)M.begin(G.pl[G.cur]);G.snap=clone(G.pl.map(q=>q.st));G.darts=[];G.done=false;G.bust=false;G.note='';sel=-1;render();
   const q=G.pl[G.cur];say(q.n+(G.mode==='x01'?', noch '+q.st.s:M.sub(q).startsWith('Ziel')?', '+M.sub(q).split('·')[0]:''))}
-function finish(p){G.over=true;G.done=true;$('winName').textContent=p.n;
+function finish(p){G.over=true;G.done=true;$('winName').textContent=p.n;addWin(p.n);$('winTab').innerHTML=standingsHTML(false);
   $('winSub').textContent=M.name()+' · '+(G.mode==='x01'?'Leg gewonnen':G.mode==='atc'?'als Erster rum':M.main(p)+' Punkte');
   $('win').classList.add('on');say(p.n+' gewinnt!')}
 
+/* ---------- Spielstand & Gesamtwertung ---------- */
+function extra(q){const h=(q.h||[]).filter(x=>typeof x==='number');
+  if(G.mode==='x01')return h.length?'Ø '+(h.reduce((a,b)=>a+b,0)/h.length).toFixed(1):'';
+  if(G.mode==='cricket')return CR.filter(t=>(q.st.mk[t]||0)>=3).length+'/7 zu';
+  if(G.mode==='atc')return q.st.t>21?'fertig':'';
+  return''}
+function standingsHTML(live){const idx=G.pl.map((q,i)=>i).sort((a,b)=>M.rank(G.pl[a],G.pl[b])||a-b);let pos=0;
+  const w=store.get('dc_wins')||{};
+  return`<div class="tab"><div class="th"><span>Spielstand · ${esc(M.name())}</span></div>${idx.map((i,k)=>{const q=G.pl[i];if(k===0||M.rank(G.pl[idx[k-1]],q)!==0)pos=k+1;
+    return`<div class="tr${live&&i===G.cur?' on':''}"><span class="pos num">${pos}</span><span class="n">${esc(q.n)}${w[q.n]?` <em>${w[q.n]} ${w[q.n]>1?'Siege':'Sieg'}</em>`:''}</span><span class="x">${esc(extra(q))}</span><span class="v num">${esc(M.main(q))}</span></div>`}).join('')}</div>`}
+function addWin(n){const w=store.get('dc_wins')||{};w[n]=(w[n]||0)+1;store.set('dc_wins',w)}
+function winsHTML(){const w=store.get('dc_wins')||{},e=Object.entries(w).sort((a,b)=>b[1]-a[1]);
+  if(!e.length)return'<p class="note" style="margin:0">Noch keine Spiele beendet. Siege werden hier automatisch gezählt.</p>';
+  return`<div class="tab">${e.map(([n,c],k)=>`<div class="tr"><span class="pos num">${k+1}</span><span class="n">${esc(n)}</span><span class="x">${c===1?'Sieg':'Siege'}</span><span class="v num">${c}</span></div>`).join('')}</div><button class="back" id="wReset">Gesamtwertung zurücksetzen</button>`}
 /* ---------- Live-Board & Visualisierungen ---------- */
 const BR=[[170,162,'d'],[162,107,'o'],[107,99,'t'],[99,15.9,'i']];
 function pol(r,a){a=a*Math.PI/180;return[(r*Math.sin(a)).toFixed(1),(-r*Math.cos(a)).toFixed(1)]}
@@ -375,9 +403,7 @@ function render(){
     <div class="co">${sub?`<span>${esc(sub)}</span>`:''}</div><div class="slots" id="turn">${slots}</div>
     <div class="sum${G.bust?' bust':''}"><span>Diese Runde</span><b>${G.bust?'Überworfen':G.note?esc(G.note):G.mode==='cricket'?G.darts.reduce((a,d)=>a+(CR.includes(d.s)?d.m:0),0)+' Marks':sum+' Punkte'}</b></div>`;
   $('pn').textContent=p.n;
-  const rest=G.pl.map((q,i)=>i).filter(i=>i!==G.cur);
-  $('players').innerHTML=rest.map(i=>`<div class="op"><div class="av"></div><div class="n"></div><div class="num">${esc(M.main(G.pl[i]))}</div></div>`).join('');
-  [...document.querySelectorAll('.op')].forEach((e,k)=>{const n=G.pl[rest[k]].n;e.querySelector('.av').textContent=n.charAt(0).toUpperCase();e.querySelector('.n').textContent=n});
+  $('players').innerHTML=standingsHTML(true);
   $('viz').innerHTML=vizHTML();drawBoard();
   const cb=$('crb');if(G.mode==='cricket'){cb.hidden=false;
     cb.innerHTML=`<table><thead><tr><th></th>${G.pl.map((q,i)=>`<th class="${i===G.cur?'on':''}">${esc(q.n)}</th>`).join('')}</tr></thead><tbody>${CR.map(t=>`<tr><td class="num">${t===25?'Bull':t}</td>${G.pl.map(q=>{const k=Math.min(q.st.mk[t]||0,3);return`<td class="mk m${k}">${MARK[k]}</td>`}).join('')}</tr>`).join('')}</tbody></table>`}else cb.hidden=true;
@@ -479,7 +505,7 @@ const MENU=[['x01','01-Spiel','301 bis 901 auf genau null runterspielen','#c9282
  ['shanghai','Shanghai','7 Runden – Single, Double, Triple = Sieg','#c23a8a','#4d0f33']];
 let mPl=[];
 function seg(id,opts){const cur=$(id).value;return`<div class="seg" data-id="${id}">${opts.map(([v,l])=>`<button type="button" data-v="${v}" class="${v===cur?'on':''}">${l}</button>`).join('')}</div>`}
-function showMenu(){$('menu').hidden=false;$('mStep1').hidden=false;$('mStep2').hidden=true;
+function showMenu(){$('menu').hidden=false;$('mWins').innerHTML=winsHTML();$('mStep1').hidden=false;$('mStep2').hidden=true;
   $('cards').innerHTML=MENU.map(([k,n,d,c1,c2])=>`<button class="card" data-m="${k}" style="--c1:${c1};--c2:${c2}">${ICON[k]}<b>${n}</b><span>${d}</span></button>`).join('')}
 function pickMode(k){const m=MENU.find(x=>x[0]===k);$('iMode').value=k;$('mStep1').hidden=true;$('mStep2').hidden=false;
   const ms=$('mSel');ms.style.setProperty('--c1',m[3]);ms.style.setProperty('--c2',m[4]);ms.innerHTML=ICON[k]+`<div><b>${m[1]}</b><span></span></div>`;ms.querySelector('span').textContent=INFO[k];
@@ -494,6 +520,7 @@ $('mPl').addEventListener('input',e=>{if(e.target.dataset.i!=null)mPl[+e.target.
 $('mPl').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(d&&mPl.length>1){mPl.splice(+d.dataset.del,1);drawPl()}});
 $('mAdd').onclick=()=>{mPl.push('Spieler '+(mPl.length+1));drawPl()};
 $('mBack').onclick=showMenu;
+$('mWins').addEventListener('click',e=>{if(e.target.id==='wReset'){store.set('dc_wins',{});$('mWins').innerHTML=winsHTML()}});
 $('mCam').onclick=()=>{$('settings').hidden=false};
 $('mGo').onclick=()=>{$('iPl').value=mPl.map((n,i)=>n.replace(/,/g,' ').trim()||'Spieler '+(i+1)).join(', ');$('win').classList.remove('on');newGame();resetRefs();$('menu').hidden=true;window.scrollTo(0,0)};
 $('bMenu').onclick=showMenu;
